@@ -15,7 +15,7 @@ export interface SiteMetric {
 
 export const siteMetrics: SiteMetric[] = [
   { value: 5000, suffix: "+", label: "Hours Saved Annually" },
-  { value: 9, suffix: "", label: "Automations Live" },
+  { value: 51, suffix: "+", label: "Automated Workflows" },
   { value: 250, suffix: "K+", label: "Dollars Saved Annually" },
   { value: 15000, suffix: "+", label: "Work Orders Processed Monthly" },
 ];
@@ -64,6 +64,20 @@ export const capabilities: Capability[] = [
     demoKey: "ivr-accuracy",
   },
   {
+    id: "wo-lifecycle",
+    title: "Work Order Lifecycle Automation",
+    description:
+      "With 51+ automated workflows, our platform manages the full work order lifecycle \u2014 from creation through completion \u2014 across multiple clients and service lines. Each client receives tailored automation without requiring separate infrastructure.",
+    metric: { value: "51+", label: "Automated Workflows" },
+    features: [
+      "Automated status transitions and field updates",
+      "Vendor penalty enforcement",
+      "Client-specific business rules (multi-tenant)",
+      "Real-time email notifications",
+    ],
+    demoKey: "wo-lifecycle",
+  },
+  {
     id: "photo-scanning",
     title: "AI Photo Scanning & Asset Extraction",
     description:
@@ -79,15 +93,15 @@ export const capabilities: Capability[] = [
   },
   {
     id: "photo-validation",
-    title: "AI Photo Validation",
+    title: "AI-Powered Quality Assurance",
     description:
-      "AI-powered quality and content validation of submitted photos \u2014 detecting blurriness, wrong angles, missing subjects, and compliance issues.",
-    metric: { value: "95%", label: "Non-Compliant Photos Caught" },
+      "Our AI vision system automatically analyzes vendor-submitted photos to verify work completion, assess quality, and detect duplicate or fraudulent image submissions. Triggered in real time via webhook integrations, the system flags issues before they reach billing.",
+    metric: { value: "Real-Time", label: "Fraud Detection & QA" },
     features: [
-      "Blur and quality detection",
-      "Angle and framing validation",
-      "Missing subject identification",
-      "Compliance scoring with reasons",
+      "Work completion verification via photo analysis",
+      "Duplicate and fraudulent image detection",
+      "Real-time webhook-triggered processing",
+      "Proactive flagging before billing",
     ],
     demoKey: "photo-validation",
   },

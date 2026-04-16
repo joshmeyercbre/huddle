@@ -4,12 +4,12 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
 const photoResults = [
-  { label: "Exterior - Front", status: "pass" as const, reason: "Clear, proper angle" },
-  { label: "Equipment Close-up", status: "pass" as const, reason: "Sharp, tag visible" },
-  { label: "Interior - Lobby", status: "fail" as const, reason: "Blurry" },
-  { label: "Nameplate", status: "pass" as const, reason: "Readable, well-lit" },
-  { label: "Ceiling Tile", status: "review" as const, reason: "Wrong angle" },
-  { label: "After - Exterior", status: "pass" as const, reason: "Matches before photo" },
+  { label: "Exterior - Front", status: "pass" as const, reason: "Verified, unique" },
+  { label: "Equipment Close-up", status: "pass" as const, reason: "Work confirmed" },
+  { label: "Interior - Lobby", status: "fail" as const, reason: "Duplicate detected" },
+  { label: "Nameplate", status: "pass" as const, reason: "Tag readable" },
+  { label: "Ceiling Tile", status: "review" as const, reason: "Metadata mismatch" },
+  { label: "After - Exterior", status: "pass" as const, reason: "Completion verified" },
 ];
 
 const statusConfig = {
@@ -25,8 +25,8 @@ export default function PhotoValidation() {
   return (
     <div ref={ref} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
       <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-        <div className="text-xs text-gray-500 uppercase tracking-wide">AI Photo Validation</div>
-        <div className="font-semibold text-cbre-dark">Quality Assessment</div>
+        <div className="text-xs text-gray-500 uppercase tracking-wide">AI Quality Assurance</div>
+        <div className="font-semibold text-cbre-dark">Photo Verification & Fraud Detection</div>
       </div>
 
       <div className="p-6">
@@ -71,11 +71,11 @@ export default function PhotoValidation() {
         transition={{ delay: 2.0 }}
       >
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-green-600 font-medium">4 passed</span>
+          <span className="text-green-600 font-medium">4 verified</span>
           <span className="text-gray-300">|</span>
-          <span className="text-amber-600 font-medium">1 review</span>
+          <span className="text-amber-600 font-medium">1 flagged</span>
           <span className="text-gray-300">|</span>
-          <span className="text-red-600 font-medium">1 failed</span>
+          <span className="text-red-600 font-medium">1 duplicate</span>
         </div>
       </motion.div>
     </div>

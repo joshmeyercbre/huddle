@@ -7,6 +7,7 @@ import { capabilities } from "@/data/capabilities";
 import InvoiceValidation from "@/components/demos/InvoiceValidation";
 import PhotoCount from "@/components/demos/PhotoCount";
 import IvrAccuracy from "@/components/demos/IvrAccuracy";
+import WoLifecycle from "@/components/demos/WoLifecycle";
 import PhotoScanning from "@/components/demos/PhotoScanning";
 import PhotoValidation from "@/components/demos/PhotoValidation";
 import DataPipeline from "@/components/demos/DataPipeline";
@@ -18,6 +19,7 @@ const demoComponents: Record<string, React.ComponentType> = {
   "invoice-validation": InvoiceValidation,
   "photo-count": PhotoCount,
   "ivr-accuracy": IvrAccuracy,
+  "wo-lifecycle": WoLifecycle,
   "photo-scanning": PhotoScanning,
   "photo-validation": PhotoValidation,
   "data-pipeline": DataPipeline,
