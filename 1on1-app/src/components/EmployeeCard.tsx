@@ -17,7 +17,7 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
 
   async function startMeeting() {
     setStarting(true);
-    await fetch("/api/meetings", {
+    const res = await fetch("/api/meetings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -26,13 +26,17 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
       }),
     });
     setStarting(false);
-    window.location.reload();
+    if (res.ok) window.location.reload();
   }
 
   async function copyLink() {
-    await navigator.clipboard.writeText(employeeUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(employeeUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard unavailable — silent fail
+    }
   }
 
   return (

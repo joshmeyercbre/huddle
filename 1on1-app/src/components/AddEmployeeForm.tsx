@@ -10,14 +10,16 @@ export default function AddEmployeeForm() {
     e.preventDefault();
     if (!name.trim()) return;
     setSaving(true);
-    await fetch("/api/employees", {
+    const res = await fetch("/api/employees", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim(), cadence }),
     });
     setSaving(false);
-    setName("");
-    window.location.reload();
+    if (res.ok) {
+      setName("");
+      window.location.reload();
+    }
   }
 
   return (
