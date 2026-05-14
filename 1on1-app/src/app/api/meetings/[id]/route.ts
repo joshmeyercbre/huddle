@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { meetingsContainer } from "@/lib/cosmos";
-import { requireAuth } from "@/lib/auth";
 import type { Meeting, MeetingSections } from "@/types";
 
 export async function GET(
