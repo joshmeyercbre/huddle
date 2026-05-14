@@ -65,3 +65,48 @@ describe("POST /api/employees", () => {
     expect(body.token).toBeDefined();
   });
 });
+
+describe("PUT /api/employees/[id]", () => {
+  it("returns 401 when not authenticated", async () => {
+    mockRequireAuth.mockReturnValue(Response.json({ error: "Unauthorized" }, { status: 401 }));
+    const req = new NextRequest("http://localhost/api/employees/1", {
+      method: "PUT",
+      body: JSON.stringify({ name: "Alice Updated" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PUT(req, { params: { id: "1" } });
+    expect(res.status).toBe(401);
+  });
+
+  it("updates and returns the employee", async () => {
+    const existing = { id: "1", name: "Alice", token: "tok", cadence: "weekly", createdAt: "2026-01-01" };
+    const updated = { ...existing, name: "Alice Updated" };
+    mockItem.mockReturnValue({
+      read: jest.fn().mockResolvedValue({ resource: existing }),
+      replace: jest.fn().mockResolvedValue({ resource: updated }),
+    });
+    const req = new NextRequest("http://localhost/api/employees/1", {
+      method: "PUT",
+      body: JSON.stringify({ name: "Alice Updated" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PUT(req, { params: { id: "1" } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.name).toBe("Alice Updated");
+  });
+
+  it("returns 404 when employee not found", async () => {
+    mockItem.mockReturnValue({
+      read: jest.fn().mockResolvedValue({ resource: undefined }),
+      replace: jest.fn(),
+    });
+    const req = new NextRequest("http://localhost/api/employees/missing", {
+      method: "PUT",
+      body: JSON.stringify({ name: "Ghost" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PUT(req, { params: { id: "missing" } });
+    expect(res.status).toBe(404);
+  });
+});

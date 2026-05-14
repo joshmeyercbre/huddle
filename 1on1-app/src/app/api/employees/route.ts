@@ -24,5 +24,6 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
   const { resource } = await employeesContainer.items.create<Employee>(employee);
+  if (!resource) return Response.json({ error: "Internal error" }, { status: 500 });
   return Response.json(resource, { status: 201 });
 }

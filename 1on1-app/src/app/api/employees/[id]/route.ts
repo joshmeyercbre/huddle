@@ -16,5 +16,6 @@ export async function PUT(
 
   const updated: Employee = { ...existing, ...body };
   const { resource } = await employeesContainer.item(params.id, params.id).replace<Employee>(updated);
+  if (!resource) return Response.json({ error: "Internal error" }, { status: 500 });
   return Response.json(resource);
 }
