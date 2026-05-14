@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npx create-next-app@14 1on1-app --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack)",
+      "Bash(npm install *)",
+      "Bash(del \"public\\\\next.svg\" \"public\\\\vercel.svg\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\Josh\\\\Documents\\\\claude-working\\\\.claude\\\\worktrees\\\\hardcore-villani-27cf2b\\\\1on1-app\\\\public\\\\next.svg\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\Josh\\\\Documents\\\\claude-working\\\\.claude\\\\worktrees\\\\hardcore-villani-27cf2b\\\\1on1-app\\\\public\\\\vercel.svg\" -Force)",
+      "Bash(Test-Path \"C:\\\\Users\\\\Josh\\\\Documents\\\\claude-working\\\\.claude\\\\worktrees\\\\hardcore-villani-27cf2b\\\\1on1-app\\\\.env.local.example\")",
+      "Bash(npm run *)",
+      "Bash(node -e \"const cfg = require\\('./jest.config.ts'\\); console.log\\(cfg\\)\")",
+      "Bash(npx jest *)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d.get\\(k\\) for k in ['type','scripts','devDependencies']}, indent=2\\)\\)\")",
+      "Bash(findstr \"ts-node\")",
+      "Bash(node -e \"const v = require\\('./node_modules/jest/package.json'\\).version; console.log\\('jest:', v\\)\")",
+      "Bash(node -e \"const v = require\\('./node_modules/ts-jest/package.json'\\).version; console.log\\('ts-jest:', v\\)\")",
+      "Bash(node -e \"const v = require\\('./node_modules/@azure/cosmos/package.json'\\).version; console.log\\('cosmos:', v\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(findstr \"esbuild\")",
+      "Bash(findstr \"@swc\")",
+      "Bash(python -c \"import sys; lines = sys.stdin.read\\(\\).splitlines\\(\\); print\\([l for l in lines if 'esbuild' in l or 'swc' in l]\\)\")",
+      "Bash(git commit *)",
+      "Bash(git rm *)",
+      "Bash(npm test *)",
+      "Bash(mkdir \"C:\\\\Users\\\\Josh\\\\Documents\\\\claude-working\\\\.claude\\\\worktrees\\\\hardcore-villani-27cf2b\\\\1on1-app\\\\src\\\\app\\\\api\\\\employees\\\\[id]\")",
+      "Bash(cd \"C:\\\\Users\\\\Josh\\\\Documents\\\\claude-working\\\\.clone\\\\worktrees\\\\hardcore-villani-27cf2b\\\\1on1-app\" && npm test -- --testPathPatterns=carryover 2>&1)",
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Josh\\\\Documents\\\\claude-working\\\\.claude\\\\worktrees\\\\hardcore-villani-27cf2b\\\\1on1-app\\\\src\\\\app\\\\api\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(az --version 2>&1)"
+    ]
+  }
+}

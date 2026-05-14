@@ -14,7 +14,7 @@ function getClient(): CosmosClient {
 }
 
 function getDb() {
-  return getClient().database(process.env.COSMOS_DB_NAME ?? "1on1db");
+  return getClient().database(process.env.COSMOS_DB_NAME ?? "huddledb");
 }
 
 export function getEmployeesContainer(): Container {

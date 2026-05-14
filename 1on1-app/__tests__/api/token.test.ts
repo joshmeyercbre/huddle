@@ -10,7 +10,7 @@ jest.mock("@/lib/cosmos", () => ({
   },
 }));
 
-import { GET } from "@/app/api/1on1/[token]/route";
+import { GET } from "@/app/api/huddle/[token]/route";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import { NextRequest } from "next/server";
 

@@ -13,7 +13,7 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
   const [copied, setCopied] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
-  const employeeUrl = `${baseUrl}/1on1/${employee.token}`;
+  const employeeUrl = `${baseUrl}/huddle/${employee.token}`;
 
   async function startMeeting() {
     setStarting(true);

@@ -1,11 +1,11 @@
 {
   "routes": [
     {
-      "route": "/1on1/*",
+      "route": "/huddle/*",
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/api/1on1/*",
+      "route": "/api/huddle/*",
       "allowedRoles": ["anonymous"]
     },
     {
