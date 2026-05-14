@@ -4,8 +4,6 @@ jest.mock("@/lib/cosmos", () => ({
     item: jest.fn(),
   },
 }));
-jest.mock("@/lib/auth", () => ({ requireAuth: jest.fn().mockReturnValue(null) }));
-
 import { POST } from "@/app/api/action-items/route";
 import { PUT } from "@/app/api/action-items/[id]/route";
 import { actionItemsContainer } from "@/lib/cosmos";

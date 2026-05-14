@@ -20,7 +20,7 @@ const mockAiQuery = actionItemsContainer.items.query as jest.Mock;
 
 const employee = { id: "e1", name: "Alice", token: "tok-123", cadence: "weekly", createdAt: "2026-01-01" };
 const meeting = { id: "m1", employeeId: "e1", meetingDate: "2026-05-14", createdAt: "2026-05-14", sections: { whatsOnYourMind: [], winOfWeek: "", workingOn: "", blockers: "" } };
-const actionItems = [{ id: "ai-1", meetingId: "m1", text: "Chase IT", assignee: "manager", completed: false, carriedOver: true }];
+const actionItems = [{ id: "ai-1", meetingId: "m1", employeeId: "e1", text: "Chase IT", assignee: "manager", completed: false, carriedOver: true, createdAt: "2026-05-14" }];
 
 beforeEach(() => {
   jest.clearAllMocks();
