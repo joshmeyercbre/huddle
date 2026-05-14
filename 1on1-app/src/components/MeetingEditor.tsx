@@ -17,13 +17,13 @@ interface Props {
 export default function MeetingEditor({ meeting, actionItems: initialItems, employeeId, employeeName, pastMeetings }: Props) {
   const [sections, setSections] = useState<MeetingSections>(meeting.sections);
   const [items, setItems] = useState<ActionItem[]>(initialItems);
-  const saveTimer = useRef<NodeJS.Timeout>();
+  const saveTimers = useRef<Partial<Record<keyof MeetingSections, NodeJS.Timeout>>>({});
 
   function handleSectionChange(field: keyof Omit<MeetingSections, "whatsOnYourMind">, value: string) {
     const updated = { ...sections, [field]: value };
     setSections(updated);
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
+    clearTimeout(saveTimers.current[field]);
+    saveTimers.current[field] = setTimeout(() => {
       fetch(`/api/meetings/${meeting.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -35,8 +35,8 @@ export default function MeetingEditor({ meeting, actionItems: initialItems, empl
   function handleTopicsChange(topics: string[]) {
     const updated = { ...sections, whatsOnYourMind: topics };
     setSections(updated);
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
+    clearTimeout(saveTimers.current.whatsOnYourMind);
+    saveTimers.current.whatsOnYourMind = setTimeout(() => {
       fetch(`/api/meetings/${meeting.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

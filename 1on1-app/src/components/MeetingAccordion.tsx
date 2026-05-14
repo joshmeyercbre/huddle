@@ -75,8 +75,8 @@ export default function MeetingAccordion({ meeting, actionItems }: Props) {
               <ul className="space-y-2">
                 {actionItems.map((item) => (
                   <li key={item.id} className="flex items-center gap-2 text-sm">
-                    <span className={item.completed ? "line-through text-gray-400" : "text-gray-700"}>{item.text}</span>
-                    {item.completed && <span className="text-xs text-green-600 font-medium">Done</span>}
+                    <span className={`flex-1 ${item.completed ? "line-through text-gray-400" : "text-gray-700"}`}>{item.text}</span>
+                    <span className="text-xs text-gray-400">{item.assignee === "manager" ? "You" : "Employee"}</span>
                   </li>
                 ))}
               </ul>
