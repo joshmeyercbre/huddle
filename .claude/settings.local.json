@@ -29,7 +29,8 @@
       "Bash(npx tsc *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Josh\\\\Documents\\\\claude-working\\\\.claude\\\\worktrees\\\\hardcore-villani-27cf2b\\\\1on1-app\\\\src\\\\app\\\\api\" -Recurse)",
       "Bash(Select-Object FullName)",
-      "PowerShell(az --version 2>&1)"
+      "PowerShell(az --version 2>&1)",
+      "Bash(git mv *)"
     ]
   }
 }
