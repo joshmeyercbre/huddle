@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest } from "next/server";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import type { Employee, Meeting, ActionItem } from "@/types";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest } from "next/server";
 import { meetingsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";

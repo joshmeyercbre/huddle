@@ -1,12 +1,38 @@
-import { meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
-import type { Meeting, ActionItem } from "@/types";
+export const dynamic = "force-dynamic";
+
+import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
+import type { Employee, Meeting, ActionItem } from "@/types";
 import MeetingEditor from "@/components/MeetingEditor";
 
 async function getPageData(token: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/1on1/${token}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json() as Promise<{ employee: { id: string; name: string }; meeting: Meeting | null; actionItems: ActionItem[] }>;
+  const { resources: employees } = await employeesContainer.items
+    .query<Employee>({
+      query: "SELECT * FROM c WHERE c.token = @token",
+      parameters: [{ name: "@token", value: token }],
+    })
+    .fetchAll();
+
+  if (employees.length === 0) return null;
+  const employee = employees[0];
+
+  const { resources: meetings } = await meetingsContainer.items
+    .query<Meeting>({
+      query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
+      parameters: [{ name: "@eid", value: employee.id }],
+    })
+    .fetchAll();
+
+  if (meetings.length === 0) return { employee, meeting: null, actionItems: [] as ActionItem[] };
+  const meeting = meetings[0];
+
+  const { resources: actionItems } = await actionItemsContainer.items
+    .query<ActionItem>({
+      query: "SELECT * FROM c WHERE c.meetingId = @mid ORDER BY c.createdAt ASC",
+      parameters: [{ name: "@mid", value: meeting.id }],
+    })
+    .fetchAll();
+
+  return { employee, meeting, actionItems };
 }
 
 async function getPastMeetings(employeeId: string, currentMeetingId: string) {

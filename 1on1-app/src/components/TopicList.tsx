@@ -7,7 +7,8 @@ interface Props {
   onChange: (topics: string[]) => void;
 }
 
-export default function TopicList({ topics, meetingId, onChange }: Props) {
+export default function TopicList(props: Props) {
+  const { topics, onChange } = props;
   const [draft, setDraft] = useState("");
 
   function addTopic() {

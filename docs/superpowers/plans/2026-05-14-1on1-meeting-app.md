@@ -1080,10 +1080,7 @@ git commit -m "feat: add token lookup API route"
 
 ```tsx
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "1:1 Meetings",
@@ -1093,7 +1090,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-50 min-h-screen`}>
+      <body className="font-sans bg-gray-50 min-h-screen">
         {children}
       </body>
     </html>

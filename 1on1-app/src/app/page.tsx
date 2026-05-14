@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { employeesContainer, meetingsContainer } from "@/lib/cosmos";
 import type { Employee, Meeting } from "@/types";
 import EmployeeCard from "@/components/EmployeeCard";

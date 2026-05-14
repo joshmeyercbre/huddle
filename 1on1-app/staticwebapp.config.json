@@ -9,6 +9,14 @@
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/api/meetings/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/action-items/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
       "route": "/api/*",
       "allowedRoles": ["authenticated"]
     },
