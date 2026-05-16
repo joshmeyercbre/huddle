@@ -81,10 +81,13 @@ export async function sendMeetingSummary(
     .map((i) => `<li>${i.completed ? "✓" : "☐"} ${i.text} <em>(${i.assignee === "manager" ? "Manager" : employee.name})</em></li>`)
     .join("");
 
+  const prepUrl = `${baseUrl()}/huddle/${employee.token}`;
   const html = `<h2>1-on-1 summary — ${employee.name}</h2>
 <p>${date}</p>
 ${sectionRows.join("")}
-${actionItems.length > 0 ? `<p><strong>Action items</strong></p><ul>${itemRows}</ul>` : ""}`;
+${actionItems.length > 0 ? `<p><strong>Action items</strong></p><ul>${itemRows}</ul>` : ""}
+<hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb">
+<p style="color:#6b7280;font-size:14px">Thought of something to cover next time? <a href="${prepUrl}" style="color:#4f46e5">Add a topic →</a></p>`;
 
   await sgMail.send({
     to: recipients,
