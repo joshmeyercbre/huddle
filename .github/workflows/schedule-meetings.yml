@@ -1,0 +1,17 @@
+name: Schedule One-on-Ones
+
+on:
+  schedule:
+    # Runs daily at 6am UTC — handles both same-day and day-before notification preferences
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  schedule-meetings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger meeting scheduler
+        run: |
+          curl -f -X POST "${{ secrets.APP_URL }}/api/schedule-meetings" \
+            -H "Authorization: Bearer ${{ secrets.SCHEDULE_SECRET }}" \
+            -H "Content-Type: application/json"

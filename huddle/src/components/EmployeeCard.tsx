@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import type { Employee, Meeting } from "@/types";
+import type { Employee, Meeting, MeetingType } from "@/types";
 
 interface Props {
   employee: Employee;
@@ -11,6 +11,7 @@ interface Props {
 export default function EmployeeCard({ employee, lastMeeting }: Props) {
   const [starting, setStarting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [meetingType, setMeetingType] = useState<MeetingType>("standard");
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   const employeeUrl = `${baseUrl}/huddle/${employee.token}`;
@@ -23,6 +24,7 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
       body: JSON.stringify({
         employeeId: employee.id,
         meetingDate: new Date().toISOString().slice(0, 10),
+        type: meetingType,
       }),
     });
     setStarting(false);
@@ -60,13 +62,24 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
           ? `Last meeting: ${new Date(lastMeeting.meetingDate).toLocaleDateString()}`
           : "No meetings yet"}
       </p>
-      <button
-        onClick={startMeeting}
-        disabled={starting}
-        className="mt-1 w-full bg-gray-900 text-white text-sm font-medium rounded-lg py-2 hover:bg-gray-700 transition disabled:opacity-50"
-      >
-        {starting ? "Starting…" : "Start Meeting"}
-      </button>
+      <div className="flex gap-2 mt-1">
+        <select
+          value={meetingType}
+          onChange={(e) => setMeetingType(e.target.value as MeetingType)}
+          className="border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        >
+          <option value="standard">1-on-1</option>
+          <option value="quarterly">Quarterly review</option>
+          <option value="onboarding">Onboarding</option>
+        </select>
+        <button
+          onClick={startMeeting}
+          disabled={starting}
+          className="flex-1 bg-gray-900 text-white text-sm font-medium rounded-lg py-2 hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {starting ? "Starting…" : "Start Meeting"}
+        </button>
+      </div>
     </div>
   );
 }

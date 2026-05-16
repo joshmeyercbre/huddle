@@ -4,13 +4,20 @@ import { NextRequest } from "next/server";
 import { meetingsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";
 import { carryOverIncompleteItems } from "@/lib/carryover";
-import type { Meeting } from "@/types";
+import type { Meeting, MeetingType, MeetingSections } from "@/types";
+
+function initialSections(type: MeetingType): MeetingSections {
+  const base: MeetingSections = { whatsOnYourMind: [], winOfWeek: "", workingOn: "", blockers: "" };
+  if (type === "quarterly") return { ...base, winsThisQuarter: "", goalsReview: "", careerDevelopment: "", nextQuarterPriorities: "" };
+  if (type === "onboarding") return { ...base, howIsItGoing: "", whatIsWorkingWell: "", whatIsUnclear: "", whatDoYouNeed: "" };
+  return base;
+}
 
 export async function POST(req: NextRequest) {
   const authError = requireAuth(req);
   if (authError) return authError;
 
-  const { employeeId, meetingDate } = await req.json() as { employeeId: string; meetingDate: string };
+  const { employeeId, meetingDate, type = "standard" } = await req.json() as { employeeId: string; meetingDate: string; type?: MeetingType };
 
   const { resources: previous } = await meetingsContainer.items
     .query<Meeting>({
@@ -24,12 +31,8 @@ export async function POST(req: NextRequest) {
     employeeId,
     meetingDate,
     createdAt: new Date().toISOString(),
-    sections: {
-      whatsOnYourMind: [],
-      winOfWeek: "",
-      workingOn: "",
-      blockers: "",
-    },
+    type,
+    sections: initialSections(type),
   };
 
   const { resource } = await meetingsContainer.items.create<Meeting>(meeting);

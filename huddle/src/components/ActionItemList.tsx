@@ -9,9 +9,10 @@ interface Props {
   employeeName: string;
   onToggle: (id: string, completed: boolean) => void;
   onAdd: (item: ActionItem) => void;
+  hideAdd?: boolean;
 }
 
-export default function ActionItemList({ items, meetingId, employeeId, employeeName, onToggle, onAdd }: Props) {
+export default function ActionItemList({ items, meetingId, employeeId, employeeName, onToggle, onAdd, hideAdd }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [text, setText] = useState("");
   const [assignee, setAssignee] = useState<"manager" | "employee">("employee");
@@ -65,7 +66,7 @@ export default function ActionItemList({ items, meetingId, employeeId, employeeN
         ))}
       </div>
 
-      {showForm ? (
+      {!hideAdd && showForm ? (
         <div className="mt-4 flex flex-col gap-2">
           <input
             value={text}
@@ -88,11 +89,11 @@ export default function ActionItemList({ items, meetingId, employeeId, employeeN
             <button onClick={() => setShowForm(false)} className="text-sm text-gray-400 hover:text-gray-700">Cancel</button>
           </div>
         </div>
-      ) : (
+      ) : !hideAdd ? (
         <button onClick={() => setShowForm(true)} className="mt-4 text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
           + Add action
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

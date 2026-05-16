@@ -12,7 +12,7 @@ export async function PUT(
   const authError = requireAuth(req);
   if (authError) return authError;
 
-  const body = await req.json() as Partial<Pick<Employee, "name" | "cadence" | "token">>;
+  const body = await req.json() as Partial<Pick<Employee, "name" | "cadence" | "token" | "email" | "notifyDaysBefore">>;
   const { resource: existing } = await employeesContainer.item(params.id, params.id).read<Employee>();
   if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
 
