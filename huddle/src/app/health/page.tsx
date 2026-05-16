@@ -16,6 +16,7 @@ interface EmployeeHealth {
   status: Status;
   openItems: number;
   hasUpcoming: boolean;
+  sentimentHistory: (1 | 2 | 3 | 4 | 5)[];
 }
 
 function computeStatus(employee: Employee, lastMeeting: Meeting | null, todayStr: string): {
@@ -58,15 +59,20 @@ async function getHealthData(): Promise<EmployeeHealth[]> {
 
   return Promise.all(
     employees.map(async (employee) => {
-      const { resources: meetings } = await meetingsContainer.items
+      const { resources: recentMeetings } = await meetingsContainer.items
         .query<Meeting>({
-          query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
+          query: "SELECT TOP 6 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
           parameters: [{ name: "@eid", value: employee.id }],
         })
         .fetchAll();
 
-      const lastMeeting = meetings[0] ?? null;
+      const lastMeeting = recentMeetings[0] ?? null;
       const { status, daysSinceLast, daysUntilDue, hasUpcoming } = computeStatus(employee, lastMeeting, todayStr);
+
+      const sentimentHistory = recentMeetings
+        .filter((m): m is Meeting & { sentiment: 1 | 2 | 3 | 4 | 5 } => m.sentiment !== undefined)
+        .reverse()
+        .map((m) => m.sentiment);
 
       return {
         employee,
@@ -76,16 +82,29 @@ async function getHealthData(): Promise<EmployeeHealth[]> {
         status,
         openItems: openByEmployee.get(employee.id) ?? 0,
         hasUpcoming,
+        sentimentHistory,
       };
     })
   );
 }
 
 const STATUS_CONFIG: Record<Status, { label: string; dot: string; row: string }> = {
-  "on-track": { label: "On track", dot: "bg-green-500", row: "" },
+  "on-track": { label: "On track", dot: "bg-green-500",  row: "" },
   "due-soon": { label: "Due soon", dot: "bg-yellow-400", row: "bg-yellow-50" },
-  "overdue":  { label: "Overdue",  dot: "bg-red-500",   row: "bg-red-50" },
-  "new":      { label: "New",      dot: "bg-gray-300",  row: "" },
+  "overdue":  { label: "Overdue",  dot: "bg-red-500",    row: "bg-red-50" },
+  "new":      { label: "New",      dot: "bg-gray-300",   row: "" },
+};
+
+const SENTIMENT_COLOR: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: "bg-red-400",
+  2: "bg-orange-400",
+  3: "bg-yellow-400",
+  4: "bg-green-400",
+  5: "bg-emerald-500",
+};
+
+const SENTIMENT_LABEL: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: "Rough", 2: "Tough", 3: "Okay", 4: "Good", 5: "Great",
 };
 
 function StatusBadge({ status }: { status: Status }) {
@@ -98,6 +117,21 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
+function SentimentDots({ history }: { history: (1 | 2 | 3 | 4 | 5)[] }) {
+  if (history.length === 0) return <span className="text-gray-400">—</span>;
+  return (
+    <div className="flex items-center gap-1">
+      {history.map((s, i) => (
+        <span
+          key={i}
+          title={SENTIMENT_LABEL[s]}
+          className={`w-3 h-3 rounded-full ${SENTIMENT_COLOR[s]}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default async function HealthPage() {
   const data = await getHealthData();
 
@@ -105,7 +139,7 @@ export default async function HealthPage() {
   for (const { status } of data) counts[status]++;
 
   return (
-    <main className="max-w-4xl mx-auto px-6 py-10">
+    <main className="max-w-5xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Team Health</h1>
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-900">← Dashboard</Link>
@@ -132,6 +166,7 @@ export default async function HealthPage() {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Last meeting</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Next due</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Open items</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Mood</th>
               </tr>
             </thead>
             <tbody>
@@ -140,7 +175,7 @@ export default async function HealthPage() {
                   const order: Record<Status, number> = { overdue: 0, "due-soon": 1, new: 2, "on-track": 3 };
                   return order[a.status] - order[b.status];
                 })
-                .map(({ employee, lastMeeting, daysSinceLast, daysUntilDue, status, openItems, hasUpcoming }) => (
+                .map(({ employee, lastMeeting, daysSinceLast, daysUntilDue, status, openItems, hasUpcoming, sentimentHistory }) => (
                   <tr key={employee.id} className={`border-b border-gray-50 last:border-0 ${STATUS_CONFIG[status].row}`}>
                     <td className="px-5 py-3.5">
                       <Link href={`/employee/${employee.id}`} className="font-medium text-gray-900 hover:underline">
@@ -152,7 +187,8 @@ export default async function HealthPage() {
                     <td className="px-5 py-3.5 text-gray-600">
                       {lastMeeting && !hasUpcoming
                         ? `${new Date(lastMeeting.meetingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} (${daysSinceLast}d ago)`
-                        : lastMeeting ? new Date(lastMeeting.meetingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                        : lastMeeting
+                        ? new Date(lastMeeting.meetingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                         : <span className="text-gray-400">Never</span>}
                     </td>
                     <td className="px-5 py-3.5 text-gray-600">
@@ -170,6 +206,9 @@ export default async function HealthPage() {
                       {openItems > 0
                         ? <span className={`font-medium ${openItems >= 5 ? "text-red-600" : "text-gray-700"}`}>{openItems}</span>
                         : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <SentimentDots history={sentimentHistory} />
                     </td>
                   </tr>
                 ))}

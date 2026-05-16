@@ -18,8 +18,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const body = await req.json() as Partial<MeetingSections> & { completedAt?: string };
-  const { completedAt, ...sectionUpdates } = body;
+  const body = await req.json() as Partial<MeetingSections> & { completedAt?: string; sentiment?: 1 | 2 | 3 | 4 | 5 };
+  const { completedAt, sentiment, ...sectionUpdates } = body;
 
   const { resource: existing } = await meetingsContainer.item(params.id, params.id).read<Meeting>();
   if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
@@ -28,6 +28,7 @@ export async function PUT(
     ...existing,
     sections: { ...existing.sections, ...sectionUpdates },
     ...(completedAt ? { completedAt } : {}),
+    ...(sentiment !== undefined ? { sentiment } : {}),
   };
 
   const { resource } = await meetingsContainer.item(params.id, params.id).replace<Meeting>(updated);

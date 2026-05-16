@@ -5,6 +5,7 @@ import TopicList from "@/components/TopicList";
 import SectionCard from "@/components/SectionCard";
 import ActionItemList from "@/components/ActionItemList";
 import MeetingAccordion from "@/components/MeetingAccordion";
+import SentimentPicker from "@/components/SentimentPicker";
 
 type TextSectionDef = {
   kind: "text";
@@ -126,6 +127,12 @@ export default function MeetingEditor({
       {type !== "standard" && (
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{TYPE_LABELS[type]}</p>
       )}
+
+      <SentimentPicker
+        meetingId={meeting.id}
+        initial={meeting.sentiment}
+        readOnly={isCompleted}
+      />
 
       {prepMode && (
         <div className="rounded-xl bg-blue-50 border border-blue-200 px-5 py-4">

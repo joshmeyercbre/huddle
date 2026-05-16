@@ -35,6 +35,7 @@ export interface Meeting {
   createdAt: string;
   type?: MeetingType;
   completedAt?: string;
+  sentiment?: 1 | 2 | 3 | 4 | 5;
   sections: MeetingSections;
 }
 
