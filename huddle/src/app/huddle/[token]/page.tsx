@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import type { Employee, Meeting, ActionItem } from "@/types";
 import MeetingEditor from "@/components/MeetingEditor";
+import MeetingDateEditor from "@/components/MeetingDateEditor";
 
 async function getPageData(token: string) {
   const { resources: employees } = await employeesContainer.items
@@ -90,9 +91,12 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
     <main className="max-w-2xl mx-auto px-6 py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{employee.name}</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {new Date(meeting.meetingDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-        </p>
+        <MeetingDateEditor
+          meetingId={meeting.id}
+          meetingDate={meeting.meetingDate}
+          isManager={isManager}
+          completed={!!meeting.completedAt}
+        />
       </div>
       <MeetingEditor
         meeting={meeting}

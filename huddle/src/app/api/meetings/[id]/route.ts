@@ -22,10 +22,10 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const body = await req.json() as Partial<MeetingSections> & { completedAt?: string; sentiment?: 1 | 2 | 3 | 4 | 5 };
-  const { completedAt, sentiment, ...sectionUpdates } = body;
+  const body = await req.json() as Partial<MeetingSections> & { completedAt?: string; sentiment?: 1 | 2 | 3 | 4 | 5; meetingDate?: string };
+  const { completedAt, sentiment, meetingDate: newDate, ...sectionUpdates } = body;
 
-  if (completedAt) {
+  if (completedAt || newDate) {
     const authError = requireAuth(req);
     if (authError) return authError;
   }
@@ -33,9 +33,15 @@ export async function PUT(
   const { resource: existing } = await meetingsContainer.item(params.id, params.id).read<Meeting>();
   if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
 
+  const updatedSections = { ...existing.sections, ...sectionUpdates };
+  if (newDate && newDate !== existing.meetingDate && (existing.type ?? "standard") === "standard") {
+    updatedSections.bonusQuestionText = getBonusQuestion(newDate);
+  }
+
   const updated: Meeting = {
     ...existing,
-    sections: { ...existing.sections, ...sectionUpdates },
+    sections: updatedSections,
+    ...(newDate ? { meetingDate: newDate } : {}),
     ...(completedAt ? { completedAt } : {}),
     ...(sentiment !== undefined ? { sentiment } : {}),
   };
