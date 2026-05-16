@@ -4,20 +4,25 @@ import { NextRequest } from "next/server";
 import { meetingsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";
 import { carryOverIncompleteItems } from "@/lib/carryover";
-import type { Meeting, MeetingType, MeetingSections } from "@/types";
-
-function initialSections(type: MeetingType): MeetingSections {
-  const base: MeetingSections = { whatsOnYourMind: [], winOfWeek: "", workingOn: "", blockers: "" };
-  if (type === "quarterly") return { ...base, winsThisQuarter: "", goalsReview: "", careerDevelopment: "", nextQuarterPriorities: "" };
-  if (type === "onboarding") return { ...base, howIsItGoing: "", whatIsWorkingWell: "", whatIsUnclear: "", whatDoYouNeed: "" };
-  return base;
-}
+import { getBonusQuestion } from "@/lib/bonusQuestions";
+import { initialSections, nextMeetingNumber } from "@/lib/meetingUtils";
+import type { Meeting, MeetingType } from "@/types";
 
 export async function POST(req: NextRequest) {
   const authError = requireAuth(req);
   if (authError) return authError;
 
   const { employeeId, meetingDate, type = "standard" } = await req.json() as { employeeId: string; meetingDate: string; type?: MeetingType };
+
+  const { resources: existing } = await meetingsContainer.items
+    .query<Meeting>({
+      query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate = @date",
+      parameters: [{ name: "@eid", value: employeeId }, { name: "@date", value: meetingDate }],
+    })
+    .fetchAll();
+  if (existing.length > 0) {
+    return Response.json({ error: "A meeting already exists for this date", meeting: existing[0] }, { status: 409 });
+  }
 
   const { resources: previous } = await meetingsContainer.items
     .query<Meeting>({
@@ -26,13 +31,22 @@ export async function POST(req: NextRequest) {
     })
     .fetchAll();
 
+  const [sections, number] = await Promise.all([
+    Promise.resolve(initialSections(type)),
+    nextMeetingNumber(employeeId),
+  ]);
+  if (type === "standard") {
+    sections.bonusQuestionText = getBonusQuestion(meetingDate);
+  }
+
   const meeting: Meeting = {
     id: crypto.randomUUID(),
     employeeId,
     meetingDate,
     createdAt: new Date().toISOString(),
+    number,
     type,
-    sections: initialSections(type),
+    sections,
   };
 
   const { resource } = await meetingsContainer.items.create<Meeting>(meeting);

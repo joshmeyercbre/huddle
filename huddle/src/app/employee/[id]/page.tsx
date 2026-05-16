@@ -4,6 +4,7 @@ import Link from "next/link";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import type { Employee, Meeting, ActionItem } from "@/types";
 import MeetingAccordion from "@/components/MeetingAccordion";
+import EmployeeActions from "@/components/EmployeeActions";
 
 async function getData(id: string) {
   const { resource: employee } = await employeesContainer.item(id, id).read<Employee>();
@@ -38,7 +39,8 @@ export default async function EmployeeHistoryPage({ params }: { params: { id: st
     <main className="max-w-2xl mx-auto px-6 py-10">
       <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 mb-6 inline-block">← Dashboard</Link>
       <h1 className="text-2xl font-bold text-gray-900 mb-1">{employee.name}</h1>
-      <p className="text-sm text-gray-500 capitalize mb-8">{employee.cadence} • {meetingsWithItems.length} meetings</p>
+      <p className="text-sm text-gray-500 capitalize">{employee.cadence} • {meetingsWithItems.length} meetings</p>
+      <EmployeeActions employee={employee} />
       {meetingsWithItems.length === 0 ? (
         <p className="text-gray-500 text-sm">No meetings yet.</p>
       ) : (

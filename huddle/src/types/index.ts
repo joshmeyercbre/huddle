@@ -1,3 +1,10 @@
+export type TopicTag = "feedback" | "decision" | "fyi" | "career";
+
+export interface Topic {
+  text: string;
+  tag?: TopicTag;
+}
+
 export interface Employee {
   id: string;
   name: string;
@@ -12,7 +19,7 @@ export type MeetingType = "standard" | "quarterly" | "onboarding";
 
 export interface MeetingSections {
   // standard
-  whatsOnYourMind: string[];
+  whatsOnYourMind: (string | Topic)[];
   winOfWeek: string;
   workingOn: string;
   blockers: string;
@@ -26,6 +33,9 @@ export interface MeetingSections {
   whatIsWorkingWell?: string;
   whatIsUnclear?: string;
   whatDoYouNeed?: string;
+  // rotating bonus question (standard meetings only)
+  bonusQuestionText?: string;
+  bonusQuestionAnswer?: string;
 }
 
 export interface Meeting {
@@ -33,6 +43,7 @@ export interface Meeting {
   employeeId: string;
   meetingDate: string;
   createdAt: string;
+  number?: number;
   type?: MeetingType;
   completedAt?: string;
   sentiment?: 1 | 2 | 3 | 4 | 5;

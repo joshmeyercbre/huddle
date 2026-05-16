@@ -1,6 +1,29 @@
 "use client";
 import { useState } from "react";
-import type { Meeting, ActionItem } from "@/types";
+import type { Meeting, ActionItem, Topic, TopicTag } from "@/types";
+
+const TAG_CLASSES: Record<TopicTag, string> = {
+  feedback: "bg-amber-100 text-amber-800",
+  decision: "bg-red-100 text-red-800",
+  fyi:      "bg-sky-100 text-sky-800",
+  career:   "bg-purple-100 text-purple-800",
+};
+const TAG_LABELS: Record<TopicTag, string> = {
+  feedback: "Feedback",
+  decision: "Decision",
+  fyi:      "FYI",
+  career:   "Career",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  standard:   "1-on-1",
+  quarterly:  "Quarterly review",
+  onboarding: "Onboarding check-in",
+};
+
+function normalizeTopic(t: string | Topic): Topic {
+  return typeof t === "string" ? { text: t } : t;
+}
 
 interface Props {
   meeting: Meeting;
@@ -23,7 +46,12 @@ export default function MeetingAccordion({ meeting, actionItems }: Props) {
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition"
       >
-        <span className="text-sm font-medium text-gray-800">{dateLabel}</span>
+        <div>
+          <span className="text-sm font-medium text-gray-800">{dateLabel}</span>
+          <span className="block text-xs text-gray-400 mt-0.5">
+            {meeting.number ? `#${meeting.number} · ` : ""}{TYPE_LABELS[meeting.type ?? "standard"]}
+          </span>
+        </div>
         <svg
           className={`w-4 h-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
@@ -41,9 +69,20 @@ export default function MeetingAccordion({ meeting, actionItems }: Props) {
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">What&apos;s on your mind</p>
               <ul className="space-y-1">
-                {meeting.sections.whatsOnYourMind.map((topic, i) => (
-                  <li key={i} className="text-sm text-gray-700 before:content-['•'] before:mr-2 before:text-gray-400">{topic}</li>
-                ))}
+                {meeting.sections.whatsOnYourMind.map((t, i) => {
+                  const topic = normalizeTopic(t);
+                  return (
+                    <li key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-400 select-none">•</span>
+                      <span className="flex-1 text-gray-700">{topic.text}</span>
+                      {topic.tag && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${TAG_CLASSES[topic.tag]}`}>
+                          {TAG_LABELS[topic.tag]}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import type { Meeting, ActionItem, MeetingSections, MeetingType } from "@/types";
+import type { Meeting, ActionItem, MeetingSections, MeetingType, Topic } from "@/types";
 import TopicList from "@/components/TopicList";
 import SectionCard from "@/components/SectionCard";
 import ActionItemList from "@/components/ActionItemList";
@@ -9,7 +9,7 @@ import SentimentPicker from "@/components/SentimentPicker";
 
 type TextSectionDef = {
   kind: "text";
-  key: keyof Omit<MeetingSections, "whatsOnYourMind">;
+  key: keyof Omit<MeetingSections, "whatsOnYourMind" | "bonusQuestionText" | "bonusQuestionAnswer">;
   label: string;
   placeholder: string;
 };
@@ -85,7 +85,7 @@ export default function MeetingEditor({
     }, 800);
   }
 
-  function handleTopicsChange(topics: string[]) {
+  function handleTopicsChange(topics: Topic[]) {
     const updated = { ...sections, whatsOnYourMind: topics };
     setSections(updated);
     clearTimeout(saveTimers.current.whatsOnYourMind);
@@ -124,9 +124,9 @@ export default function MeetingEditor({
 
   return (
     <div className="space-y-4">
-      {type !== "standard" && (
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{TYPE_LABELS[type]}</p>
-      )}
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        {meeting.number ? `#${meeting.number} · ` : ""}{TYPE_LABELS[type]}
+      </p>
 
       <SentimentPicker
         meetingId={meeting.id}
@@ -170,6 +170,21 @@ export default function MeetingEditor({
             readOnly={isCompleted}
           />
         )
+      )}
+
+      {sections.bonusQuestionText && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
+          <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wide mb-1">This week&rsquo;s question</p>
+          <p className="text-sm font-medium text-indigo-900 mb-3">{sections.bonusQuestionText}</p>
+          <textarea
+            value={sections.bonusQuestionAnswer ?? ""}
+            onChange={(e) => handleSectionChange("bonusQuestionAnswer", e.target.value)}
+            placeholder="Your thoughts…"
+            readOnly={isCompleted}
+            rows={4}
+            className="w-full text-sm text-gray-800 bg-white border border-indigo-200 rounded-lg px-3 py-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-gray-400 read-only:bg-gray-50 read-only:text-gray-600"
+          />
+        </div>
       )}
 
       <ActionItemList
