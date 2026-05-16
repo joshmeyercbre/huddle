@@ -6,6 +6,7 @@ import { sendMeetingSummary } from "@/lib/notify";
 import { carryOverIncompleteItems } from "@/lib/carryover";
 import { getBonusQuestion } from "@/lib/bonusQuestions";
 import { initialSections, CADENCE_DAYS, nextMeetingNumber } from "@/lib/meetingUtils";
+import { requireAuth } from "@/lib/auth";
 import type { Meeting, MeetingSections, Employee, ActionItem } from "@/types";
 
 export async function GET(
@@ -23,6 +24,11 @@ export async function PUT(
 ) {
   const body = await req.json() as Partial<MeetingSections> & { completedAt?: string; sentiment?: 1 | 2 | 3 | 4 | 5 };
   const { completedAt, sentiment, ...sectionUpdates } = body;
+
+  if (completedAt) {
+    const authError = requireAuth(req);
+    if (authError) return authError;
+  }
 
   const { resource: existing } = await meetingsContainer.item(params.id, params.id).read<Meeting>();
   if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
