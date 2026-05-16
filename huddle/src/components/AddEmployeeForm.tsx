@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import type { Employee } from "@/types";
 
 export default function AddEmployeeForm() {
   const [name, setName] = useState("");
@@ -7,6 +8,10 @@ export default function AddEmployeeForm() {
   const [cadence, setCadence] = useState<"weekly" | "biweekly">("weekly");
   const [notifyDaysBefore, setNotifyDaysBefore] = useState<0 | 1>(1);
   const [saving, setSaving] = useState(false);
+  const [created, setCreated] = useState<Employee | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,10 +24,80 @@ export default function AddEmployeeForm() {
     });
     setSaving(false);
     if (res.ok) {
+      const employee: Employee = await res.json();
       setName("");
       setEmail("");
-      window.location.reload();
+      setCreated(employee);
     }
+  }
+
+  async function copyLink(link: string) {
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // clipboard unavailable — silent fail
+    }
+  }
+
+  async function sendLink(employeeId: string) {
+    setSendingLink(true);
+    await fetch(`/api/employees/${employeeId}/send-link`, { method: "POST" });
+    setSendingLink(false);
+    setLinkSent(true);
+  }
+
+  if (created) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? window.location.origin;
+    const link = `${baseUrl}/huddle/${created.token}`;
+
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-xl p-5 flex flex-col gap-3 max-w-lg">
+        <p className="text-sm font-semibold text-green-800">
+          {created.name} added successfully
+        </p>
+
+        <div>
+          <p className="text-xs font-medium text-gray-600 mb-1">Their unique prep link</p>
+          <div className="flex gap-2 items-center">
+            <code className="flex-1 min-w-0 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 truncate text-gray-700">
+              {link}
+            </code>
+            <button
+              onClick={() => copyLink(link)}
+              className="shrink-0 text-xs px-3 py-2 border border-gray-300 rounded-lg hover:bg-white transition text-gray-600"
+            >
+              {linkCopied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
+
+        {created.email && (
+          <button
+            onClick={() => sendLink(created.id)}
+            disabled={sendingLink || linkSent}
+            className="text-sm font-medium px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 w-fit"
+          >
+            {linkSent ? "Link sent!" : sendingLink ? "Sending…" : "Send link to employee"}
+          </button>
+        )}
+
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+          <p className="text-xs text-amber-800 leading-relaxed">
+            <strong>Remind {created.name}:</strong> This link is unique to them — it should not be shared with anyone else.
+            If they believe it has been shared or compromised, they should contact you immediately so you can issue a new link.
+          </p>
+        </div>
+
+        <button
+          onClick={() => { setCreated(null); window.location.reload(); }}
+          className="text-sm text-gray-500 hover:text-gray-900 transition w-fit"
+        >
+          Done
+        </button>
+      </div>
+    );
   }
 
   return (
