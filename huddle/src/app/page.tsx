@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { employeesContainer, meetingsContainer } from "@/lib/cosmos";
 import type { Employee, Meeting } from "@/types";
+import Link from "next/link";
 import EmployeeCard from "@/components/EmployeeCard";
 import AddEmployeeForm from "@/components/AddEmployeeForm";
 
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
     <main className="max-w-4xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Huddle</h1>
+        <Link href="/health" className="text-sm text-gray-500 hover:text-gray-900">Team Health →</Link>
       </div>
       <div className="mb-8 p-5 bg-white rounded-xl border border-gray-200">
         <h2 className="text-sm font-semibold text-gray-600 mb-4">Add Employee</h2>
