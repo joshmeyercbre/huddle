@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import type { Meeting, ActionItem, MeetingSections, MeetingType } from "@/types";
+import type { Meeting, ActionItem, MeetingSections, MeetingType, Topic } from "@/types";
 import TopicList from "@/components/TopicList";
 import SectionCard from "@/components/SectionCard";
 import ActionItemList from "@/components/ActionItemList";
@@ -85,7 +85,7 @@ export default function MeetingEditor({
     }, 800);
   }
 
-  function handleTopicsChange(topics: string[]) {
+  function handleTopicsChange(topics: Topic[]) {
     const updated = { ...sections, whatsOnYourMind: topics };
     setSections(updated);
     clearTimeout(saveTimers.current.whatsOnYourMind);
@@ -181,8 +181,8 @@ export default function MeetingEditor({
             onChange={(e) => handleSectionChange("bonusQuestionAnswer", e.target.value)}
             placeholder="Your thoughts…"
             readOnly={isCompleted}
-            rows={3}
-            className="w-full text-sm text-gray-800 bg-white border border-indigo-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-gray-400 read-only:bg-gray-50 read-only:text-gray-600"
+            rows={4}
+            className="w-full text-sm text-gray-800 bg-white border border-indigo-200 rounded-lg px-3 py-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-gray-400 read-only:bg-gray-50 read-only:text-gray-600"
           />
         </div>
       )}

@@ -1,3 +1,10 @@
+export type TopicTag = "feedback" | "decision" | "fyi" | "career";
+
+export interface Topic {
+  text: string;
+  tag?: TopicTag;
+}
+
 export interface Employee {
   id: string;
   name: string;
@@ -12,7 +19,7 @@ export type MeetingType = "standard" | "quarterly" | "onboarding";
 
 export interface MeetingSections {
   // standard
-  whatsOnYourMind: string[];
+  whatsOnYourMind: (string | Topic)[];
   winOfWeek: string;
   workingOn: string;
   blockers: string;

@@ -14,9 +14,9 @@ export default function SectionCard({ label, value, onChange, placeholder, readO
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? ""}
-        rows={3}
+        rows={4}
         readOnly={readOnly}
-        className={`w-full resize-none text-sm text-gray-800 placeholder-gray-300 focus:outline-none ${readOnly ? "text-gray-500" : ""}`}
+        className={`w-full resize-y text-sm text-gray-800 placeholder-gray-300 focus:outline-none ${readOnly ? "text-gray-500" : ""}`}
       />
     </div>
   );

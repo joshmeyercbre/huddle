@@ -1,5 +1,9 @@
 import sgMail from "@sendgrid/mail";
-import type { Employee, Meeting, ActionItem, MeetingSections } from "@/types";
+import type { Employee, Meeting, ActionItem, MeetingSections, Topic, TopicTag } from "@/types";
+
+const TAG_LABELS: Record<TopicTag, string> = {
+  feedback: "Feedback", decision: "Decision", fyi: "FYI", career: "Career",
+};
 
 function init() {
   const key = process.env.SENDGRID_API_KEY;
@@ -58,7 +62,12 @@ export async function sendMeetingSummary(
   const sectionRows: string[] = [];
 
   if (meeting.sections.whatsOnYourMind.length > 0) {
-    sectionRows.push(`<p><strong>What's on your mind?</strong></p><ul>${meeting.sections.whatsOnYourMind.map((t) => `<li>${t}</li>`).join("")}</ul>`);
+    const topicItems = meeting.sections.whatsOnYourMind.map((t) => {
+      const topic: Topic = typeof t === "string" ? { text: t } : t;
+      const tag = topic.tag ? ` <em style="color:#6b7280">[${TAG_LABELS[topic.tag]}]</em>` : "";
+      return `<li>${topic.text}${tag}</li>`;
+    }).join("");
+    sectionRows.push(`<p><strong>What's on your mind?</strong></p><ul>${topicItems}</ul>`);
   }
 
   for (const [key, label] of Object.entries(SECTION_LABELS)) {
