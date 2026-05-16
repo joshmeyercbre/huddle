@@ -101,6 +101,22 @@ ${actionItems.length > 0 ? `<p><strong>Action items</strong></p><ul>${itemRows}<
   });
 }
 
+export async function sendHuddleLinkEmail(employee: Employee): Promise<void> {
+  if (!init() || !employee.email) return;
+
+  const link = `${baseUrl()}/huddle/${employee.token}`;
+  await sgMail.send({
+    to: employee.email,
+    from: from(),
+    subject: "Your personal Huddle prep link",
+    html: `<p>Hi ${employee.name},</p>
+<p>Here is your personal link for 1-on-1 meeting preparation:</p>
+<p><a href="${link}" style="font-size:16px;color:#4f46e5">${link}</a></p>
+<p><strong>Important — please keep this link private.</strong> It is unique to you and gives direct access to your meeting prep page. Do not share it with others.</p>
+<p>If you believe this link has been shared or compromised, contact your manager immediately so a new link can be issued for you.</p>`,
+  });
+}
+
 export async function sendManagerDigest(
   entries: { employee: Employee; meetingDate: string }[]
 ): Promise<void> {
