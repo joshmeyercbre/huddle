@@ -17,12 +17,14 @@ export async function POST(req: NextRequest) {
   const authError = requireAuth(req);
   if (authError) return authError;
 
-  const body = await req.json() as { name: string; cadence: "weekly" | "biweekly" };
+  const body = await req.json() as { name: string; cadence: "weekly" | "biweekly"; email?: string; notifyDaysBefore?: 0 | 1 };
   const employee: Employee = {
     id: crypto.randomUUID(),
     name: body.name,
     token: crypto.randomUUID(),
     cadence: body.cadence,
+    ...(body.email ? { email: body.email } : {}),
+    notifyDaysBefore: body.notifyDaysBefore ?? 0,
     createdAt: new Date().toISOString(),
   };
   const { resource } = await employeesContainer.items.create<Employee>(employee);

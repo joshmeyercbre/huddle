@@ -2,8 +2,8 @@ name: Schedule One-on-Ones
 
 on:
   schedule:
-    # Runs every Monday at 9am UTC
-    - cron: "0 9 * * 1"
+    # Runs daily at 6am UTC — handles both same-day and day-before notification preferences
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:

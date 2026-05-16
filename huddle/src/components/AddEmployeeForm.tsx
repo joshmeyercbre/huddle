@@ -3,7 +3,9 @@ import { useState } from "react";
 
 export default function AddEmployeeForm() {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [cadence, setCadence] = useState<"weekly" | "biweekly">("weekly");
+  const [notifyDaysBefore, setNotifyDaysBefore] = useState<0 | 1>(1);
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -13,11 +15,12 @@ export default function AddEmployeeForm() {
     const res = await fetch("/api/employees", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), cadence }),
+      body: JSON.stringify({ name: name.trim(), email: email.trim() || undefined, cadence, notifyDaysBefore }),
     });
     setSaving(false);
     if (res.ok) {
       setName("");
+      setEmail("");
       window.location.reload();
     }
   }
@@ -34,6 +37,16 @@ export default function AddEmployeeForm() {
         />
       </div>
       <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-600">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="employee@company.com"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-gray-600">Cadence</label>
         <select
           value={cadence}
@@ -42,6 +55,17 @@ export default function AddEmployeeForm() {
         >
           <option value="weekly">Weekly</option>
           <option value="biweekly">Bi-weekly</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-600">Notify</label>
+        <select
+          value={notifyDaysBefore}
+          onChange={(e) => setNotifyDaysBefore(Number(e.target.value) as 0 | 1)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+        >
+          <option value={1}>Day before</option>
+          <option value={0}>Morning of</option>
         </select>
       </div>
       <button

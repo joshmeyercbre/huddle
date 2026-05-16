@@ -3,6 +3,8 @@ export interface Employee {
   name: string;
   token: string;
   cadence: "weekly" | "biweekly";
+  email?: string;
+  notifyDaysBefore?: 0 | 1;
   createdAt: string;
 }
 
