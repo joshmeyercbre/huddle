@@ -5,14 +5,8 @@ import { meetingsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";
 import { carryOverIncompleteItems } from "@/lib/carryover";
 import { getBonusQuestion } from "@/lib/bonusQuestions";
-import type { Meeting, MeetingType, MeetingSections } from "@/types";
-
-function initialSections(type: MeetingType): MeetingSections {
-  const base: MeetingSections = { whatsOnYourMind: [], winOfWeek: "", workingOn: "", blockers: "" };
-  if (type === "quarterly") return { ...base, winsThisQuarter: "", goalsReview: "", careerDevelopment: "", nextQuarterPriorities: "" };
-  if (type === "onboarding") return { ...base, howIsItGoing: "", whatIsWorkingWell: "", whatIsUnclear: "", whatDoYouNeed: "" };
-  return base;
-}
+import { initialSections } from "@/lib/meetingUtils";
+import type { Meeting, MeetingType } from "@/types";
 
 export async function POST(req: NextRequest) {
   const authError = requireAuth(req);
