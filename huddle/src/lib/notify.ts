@@ -7,12 +7,16 @@ const TAG_LABELS: Record<TopicTag, string> = {
 
 function init() {
   const key = process.env.SENDGRID_API_KEY;
-  if (!key) return false;
+  if (!key) { console.warn("[notify] SENDGRID_API_KEY is not set — emails will not send"); return false; }
   sgMail.setApiKey(key);
   return true;
 }
 
-const from = () => process.env.FROM_EMAIL ?? "";
+const from = () => {
+  const addr = process.env.FROM_EMAIL;
+  if (!addr) console.warn("[notify] FROM_EMAIL is not set — emails will be rejected by SendGrid");
+  return addr ?? "";
+};
 const baseUrl = () => process.env.NEXT_PUBLIC_BASE_URL ?? "";
 
 export async function sendEmployeeNotification(employee: Employee, meetingDate: string): Promise<void> {
@@ -102,7 +106,7 @@ export async function sendManagerDigest(
 ): Promise<void> {
   if (!init() || entries.length === 0) return;
   const managerEmail = process.env.MANAGER_EMAIL;
-  if (!managerEmail) return;
+  if (!managerEmail) { console.warn("[notify] MANAGER_EMAIL is not set — manager digest will not send"); return; }
 
   const rows = entries
     .map(({ employee, meetingDate }) =>
