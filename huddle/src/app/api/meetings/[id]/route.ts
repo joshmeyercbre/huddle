@@ -52,41 +52,49 @@ export async function PUT(
       })
       .fetchAll();
     if (employee) {
-      await sendMeetingSummary(employee, resource, actionItems);
+      try {
+        await sendMeetingSummary(employee, resource, actionItems);
+      } catch {
+        // Email failure must not crash the response — meeting is already saved
+      }
 
-      // Auto-create the next meeting if one doesn't already exist
-      const days = CADENCE_DAYS[employee.cadence];
-      const currentDate = new Date(existing.meetingDate);
-      currentDate.setUTCDate(currentDate.getUTCDate() + days);
-      const nextDateStr = currentDate.toISOString().split("T")[0];
+      try {
+        // Auto-create the next meeting if one doesn't already exist
+        const days = CADENCE_DAYS[employee.cadence];
+        const currentDate = new Date(existing.meetingDate);
+        currentDate.setUTCDate(currentDate.getUTCDate() + days);
+        const nextDateStr = currentDate.toISOString().split("T")[0];
 
-      const { resources: future } = await meetingsContainer.items
-        .query<Meeting>({
-          query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate >= @next",
-          parameters: [
-            { name: "@eid", value: existing.employeeId },
-            { name: "@next", value: nextDateStr },
-          ],
-        })
-        .fetchAll();
+        const { resources: future } = await meetingsContainer.items
+          .query<Meeting>({
+            query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate >= @next",
+            parameters: [
+              { name: "@eid", value: existing.employeeId },
+              { name: "@next", value: nextDateStr },
+            ],
+          })
+          .fetchAll();
 
-      if (future.length === 0) {
-        const sections = initialSections("standard");
-        sections.bonusQuestionText = getBonusQuestion(nextDateStr);
-        const number = await nextMeetingNumber(existing.employeeId);
-        const nextMeeting: Meeting = {
-          id: crypto.randomUUID(),
-          employeeId: existing.employeeId,
-          meetingDate: nextDateStr,
-          createdAt: new Date().toISOString(),
-          number,
-          type: "standard",
-          sections,
-        };
-        const { resource: created } = await meetingsContainer.items.create<Meeting>(nextMeeting);
-        if (created) {
-          await carryOverIncompleteItems(existing.id, created.id, existing.employeeId);
+        if (future.length === 0) {
+          const sections = initialSections("standard");
+          sections.bonusQuestionText = getBonusQuestion(nextDateStr);
+          const number = await nextMeetingNumber(existing.employeeId);
+          const nextMeeting: Meeting = {
+            id: crypto.randomUUID(),
+            employeeId: existing.employeeId,
+            meetingDate: nextDateStr,
+            createdAt: new Date().toISOString(),
+            number,
+            type: "standard",
+            sections,
+          };
+          const { resource: created } = await meetingsContainer.items.create<Meeting>(nextMeeting);
+          if (created) {
+            await carryOverIncompleteItems(existing.id, created.id, existing.employeeId);
+          }
         }
+      } catch {
+        // Next-meeting creation failure must not crash the response
       }
     }
   }
