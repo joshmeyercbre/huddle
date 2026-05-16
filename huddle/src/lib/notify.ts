@@ -105,14 +105,16 @@ export async function sendManagerDigest(
   if (!managerEmail) return;
 
   const rows = entries
-    .map(({ employee, meetingDate }) => `<li>${employee.name} — ${meetingDate}</li>`)
+    .map(({ employee, meetingDate }) =>
+      `<li><a href="${baseUrl()}/huddle/${employee.token}" style="color:#4f46e5">${employee.name}</a> — ${meetingDate}</li>`
+    )
     .join("");
 
   const count = entries.length;
   await sgMail.send({
     to: managerEmail,
     from: from(),
-    subject: `${count} 1-on-1${count > 1 ? "s" : ""} scheduled`,
-    html: `<p>The following 1-on-1 meetings have been scheduled:</p><ul>${rows}</ul>`,
+    subject: `${count} 1-on-1${count > 1 ? "s" : ""} coming up — time to prepare`,
+    html: `<p>The following 1-on-1s are scheduled. Click a name to open the meeting and add your own prep notes.</p><ul>${rows}</ul>`,
   });
 }

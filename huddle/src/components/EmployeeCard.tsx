@@ -3,6 +3,17 @@ import { useState } from "react";
 import Link from "next/link";
 import type { Employee, Meeting, MeetingType, Topic } from "@/types";
 
+function hasPrepped(meeting: Meeting): boolean {
+  const s = meeting.sections;
+  return (
+    (s.whatsOnYourMind?.length ?? 0) > 0 ||
+    !!s.winOfWeek?.trim() ||
+    !!s.workingOn?.trim() ||
+    !!s.blockers?.trim() ||
+    meeting.sentiment !== undefined
+  );
+}
+
 interface Props {
   employee: Employee;
   lastMeeting: Meeting | null;
@@ -93,7 +104,20 @@ export default function EmployeeCard({ employee, lastMeeting, nextMeeting }: Pro
 
       {nextMeeting && (
         <div className="border-t border-gray-100 pt-3">
-          <p className="text-xs text-gray-400 mb-1.5">Save topic for {nextDate}</p>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs text-gray-400">Save topic for {nextDate}</p>
+            {hasPrepped(nextMeeting) ? (
+              <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                Prepped
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-xs text-gray-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block" />
+                Not yet
+              </span>
+            )}
+          </div>
           <div className="flex gap-2">
             <input
               value={topicDraft}
