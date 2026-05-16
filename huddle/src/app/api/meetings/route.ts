@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { meetingsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";
 import { carryOverIncompleteItems } from "@/lib/carryover";
+import { getBonusQuestion } from "@/lib/bonusQuestions";
 import type { Meeting, MeetingType, MeetingSections } from "@/types";
 
 function initialSections(type: MeetingType): MeetingSections {
@@ -26,13 +27,18 @@ export async function POST(req: NextRequest) {
     })
     .fetchAll();
 
+  const sections = initialSections(type);
+  if (type === "standard") {
+    sections.bonusQuestionText = getBonusQuestion(meetingDate);
+  }
+
   const meeting: Meeting = {
     id: crypto.randomUUID(),
     employeeId,
     meetingDate,
     createdAt: new Date().toISOString(),
     type,
-    sections: initialSections(type),
+    sections,
   };
 
   const { resource } = await meetingsContainer.items.create<Meeting>(meeting);

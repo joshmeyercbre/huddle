@@ -26,6 +26,9 @@ export interface MeetingSections {
   whatIsWorkingWell?: string;
   whatIsUnclear?: string;
   whatDoYouNeed?: string;
+  // rotating bonus question (standard meetings only)
+  bonusQuestionText?: string;
+  bonusQuestionAnswer?: string;
 }
 
 export interface Meeting {
