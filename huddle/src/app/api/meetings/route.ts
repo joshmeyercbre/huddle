@@ -5,7 +5,7 @@ import { meetingsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";
 import { carryOverIncompleteItems } from "@/lib/carryover";
 import { getBonusQuestion } from "@/lib/bonusQuestions";
-import { initialSections } from "@/lib/meetingUtils";
+import { initialSections, nextMeetingNumber } from "@/lib/meetingUtils";
 import type { Meeting, MeetingType } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     })
     .fetchAll();
 
-  const sections = initialSections(type);
+  const [sections, number] = await Promise.all([
+    Promise.resolve(initialSections(type)),
+    nextMeetingNumber(employeeId),
+  ]);
   if (type === "standard") {
     sections.bonusQuestionText = getBonusQuestion(meetingDate);
   }
@@ -31,6 +34,7 @@ export async function POST(req: NextRequest) {
     employeeId,
     meetingDate,
     createdAt: new Date().toISOString(),
+    number,
     type,
     sections,
   };

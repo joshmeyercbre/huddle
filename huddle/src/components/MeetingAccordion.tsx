@@ -15,6 +15,12 @@ const TAG_LABELS: Record<TopicTag, string> = {
   career:   "Career",
 };
 
+const TYPE_LABELS: Record<string, string> = {
+  standard:   "1-on-1",
+  quarterly:  "Quarterly review",
+  onboarding: "Onboarding check-in",
+};
+
 function normalizeTopic(t: string | Topic): Topic {
   return typeof t === "string" ? { text: t } : t;
 }
@@ -40,7 +46,12 @@ export default function MeetingAccordion({ meeting, actionItems }: Props) {
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition"
       >
-        <span className="text-sm font-medium text-gray-800">{dateLabel}</span>
+        <div>
+          <span className="text-sm font-medium text-gray-800">{dateLabel}</span>
+          <span className="block text-xs text-gray-400 mt-0.5">
+            {meeting.number ? `#${meeting.number} · ` : ""}{TYPE_LABELS[meeting.type ?? "standard"]}
+          </span>
+        </div>
         <svg
           className={`w-4 h-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"

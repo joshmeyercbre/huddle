@@ -92,7 +92,7 @@ ${actionItems.length > 0 ? `<p><strong>Action items</strong></p><ul>${itemRows}<
   await sgMail.send({
     to: recipients,
     from: from(),
-    subject: `1-on-1 summary — ${employee.name} — ${date}`,
+    subject: `1-on-1 summary${meeting.number ? ` #${meeting.number}` : ""} — ${employee.name} — ${date}`,
     html,
   });
 }

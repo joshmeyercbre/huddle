@@ -43,6 +43,7 @@ export interface Meeting {
   employeeId: string;
   meetingDate: string;
   createdAt: string;
+  number?: number;
   type?: MeetingType;
   completedAt?: string;
   sentiment?: 1 | 2 | 3 | 4 | 5;

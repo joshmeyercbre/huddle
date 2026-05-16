@@ -5,7 +5,7 @@ import { meetingsContainer, employeesContainer, actionItemsContainer } from "@/l
 import { sendMeetingSummary } from "@/lib/notify";
 import { carryOverIncompleteItems } from "@/lib/carryover";
 import { getBonusQuestion } from "@/lib/bonusQuestions";
-import { initialSections, CADENCE_DAYS } from "@/lib/meetingUtils";
+import { initialSections, CADENCE_DAYS, nextMeetingNumber } from "@/lib/meetingUtils";
 import type { Meeting, MeetingSections, Employee, ActionItem } from "@/types";
 
 export async function GET(
@@ -67,11 +67,13 @@ export async function PUT(
       if (future.length === 0) {
         const sections = initialSections("standard");
         sections.bonusQuestionText = getBonusQuestion(nextDateStr);
+        const number = await nextMeetingNumber(existing.employeeId);
         const nextMeeting: Meeting = {
           id: crypto.randomUUID(),
           employeeId: existing.employeeId,
           meetingDate: nextDateStr,
           createdAt: new Date().toISOString(),
+          number,
           type: "standard",
           sections,
         };

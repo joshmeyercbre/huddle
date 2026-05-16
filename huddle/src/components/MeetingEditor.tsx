@@ -124,9 +124,9 @@ export default function MeetingEditor({
 
   return (
     <div className="space-y-4">
-      {type !== "standard" && (
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{TYPE_LABELS[type]}</p>
-      )}
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        {meeting.number ? `#${meeting.number} · ` : ""}{TYPE_LABELS[type]}
+      </p>
 
       <SentimentPicker
         meetingId={meeting.id}
