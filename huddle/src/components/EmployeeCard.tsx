@@ -27,6 +27,11 @@ export default function EmployeeCard({ employee, lastMeeting, nextMeeting }: Pro
   const [topicDraft, setTopicDraft] = useState("");
   const [topicSaved, setTopicSaved] = useState(false);
   const [savingTopic, setSavingTopic] = useState(false);
+  const [savedTopics, setSavedTopics] = useState<Topic[]>(
+    (nextMeeting?.sections.whatsOnYourMind ?? []).map((t) =>
+      typeof t === "string" ? { text: t } : t
+    )
+  );
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   const employeeUrl = `${baseUrl}/huddle/${employee.token}`;
@@ -59,16 +64,13 @@ export default function EmployeeCard({ employee, lastMeeting, nextMeeting }: Pro
   async function saveTopic() {
     if (!topicDraft.trim() || !nextMeeting) return;
     setSavingTopic(true);
-    const existing = nextMeeting.sections.whatsOnYourMind as (string | Topic)[];
-    const updated: Topic[] = [
-      ...existing.map((t) => (typeof t === "string" ? { text: t } : t)),
-      { text: topicDraft.trim() },
-    ];
+    const updated = [...savedTopics, { text: topicDraft.trim() }];
     await fetch(`/api/meetings/${nextMeeting.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ whatsOnYourMind: updated }),
     });
+    setSavedTopics(updated);
     setSavingTopic(false);
     setTopicDraft("");
     setTopicSaved(true);

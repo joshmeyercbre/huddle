@@ -4,6 +4,8 @@ import { NextRequest } from "next/server";
 import { employeesContainer, meetingsContainer } from "@/lib/cosmos";
 import { carryOverIncompleteItems } from "@/lib/carryover";
 import { sendEmployeeNotification, sendManagerDigest } from "@/lib/notify";
+import { initialSections, nextMeetingNumber } from "@/lib/meetingUtils";
+import { getBonusQuestion } from "@/lib/bonusQuestions";
 import type { Employee, Meeting } from "@/types";
 
 const CADENCE_DAYS: Record<Employee["cadence"], number> = { weekly: 7, biweekly: 14 };
@@ -54,12 +56,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const sections = initialSections("standard");
+    sections.bonusQuestionText = getBonusQuestion(meetingDateStr);
+    const number = await nextMeetingNumber(employee.id);
+
     const meeting: Meeting = {
       id: crypto.randomUUID(),
       employeeId: employee.id,
       meetingDate: meetingDateStr,
       createdAt: new Date().toISOString(),
-      sections: { whatsOnYourMind: [], winOfWeek: "", workingOn: "", blockers: "" },
+      number,
+      type: "standard",
+      sections,
     };
 
     const { resource } = await meetingsContainer.items.create<Meeting>(meeting);
