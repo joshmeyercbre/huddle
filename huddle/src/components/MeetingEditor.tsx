@@ -12,9 +12,10 @@ interface Props {
   employeeId: string;
   employeeName: string;
   pastMeetings: { meeting: Meeting; actionItems: ActionItem[] }[];
+  prepMode?: boolean;
 }
 
-export default function MeetingEditor({ meeting, actionItems: initialItems, employeeId, employeeName, pastMeetings }: Props) {
+export default function MeetingEditor({ meeting, actionItems: initialItems, employeeId, employeeName, pastMeetings, prepMode }: Props) {
   const [sections, setSections] = useState<MeetingSections>(meeting.sections);
   const [items, setItems] = useState<ActionItem[]>(initialItems);
   const saveTimers = useRef<Partial<Record<keyof MeetingSections, NodeJS.Timeout>>>({});
@@ -53,8 +54,18 @@ export default function MeetingEditor({ meeting, actionItems: initialItems, empl
     setItems((prev) => [...prev, item]);
   }
 
+  const meetingLabel = new Date(meeting.meetingDate).toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric",
+  });
+
   return (
     <div className="space-y-4">
+      {prepMode && (
+        <div className="rounded-xl bg-blue-50 border border-blue-200 px-5 py-4">
+          <p className="text-sm font-medium text-blue-900">Upcoming 1-on-1 — {meetingLabel}</p>
+          <p className="text-sm text-blue-700 mt-0.5">Add your topics and notes below before the meeting starts.</p>
+        </div>
+      )}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">What&apos;s on your mind?</p>
         <TopicList topics={sections.whatsOnYourMind} meetingId={meeting.id} onChange={handleTopicsChange} />
@@ -88,6 +99,7 @@ export default function MeetingEditor({ meeting, actionItems: initialItems, empl
         employeeName={employeeName}
         onToggle={handleToggle}
         onAdd={handleAddItem}
+        hideAdd={prepMode}
       />
 
       {pastMeetings.length > 0 && (

@@ -75,11 +75,13 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
   if (!meeting) {
     return (
       <main className="max-w-xl mx-auto px-6 py-16 text-center">
-        <p className="text-gray-500">No meeting has been started yet. Check back after your manager starts one.</p>
+        <p className="text-gray-500">No upcoming meeting scheduled yet — check back soon.</p>
       </main>
     );
   }
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const prepMode = meeting.meetingDate > todayStr;
   const pastMeetings = await getPastMeetings(employee.id, meeting.id);
 
   return (
@@ -96,6 +98,7 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
         employeeId={employee.id}
         employeeName={employee.name}
         pastMeetings={pastMeetings}
+        prepMode={prepMode}
       />
     </main>
   );
