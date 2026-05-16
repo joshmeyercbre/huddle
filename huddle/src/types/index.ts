@@ -8,11 +8,24 @@ export interface Employee {
   createdAt: string;
 }
 
+export type MeetingType = "standard" | "quarterly" | "onboarding";
+
 export interface MeetingSections {
+  // standard
   whatsOnYourMind: string[];
   winOfWeek: string;
   workingOn: string;
   blockers: string;
+  // quarterly
+  winsThisQuarter?: string;
+  goalsReview?: string;
+  careerDevelopment?: string;
+  nextQuarterPriorities?: string;
+  // onboarding
+  howIsItGoing?: string;
+  whatIsWorkingWell?: string;
+  whatIsUnclear?: string;
+  whatDoYouNeed?: string;
 }
 
 export interface Meeting {
@@ -20,6 +33,8 @@ export interface Meeting {
   employeeId: string;
   meetingDate: string;
   createdAt: string;
+  type?: MeetingType;
+  completedAt?: string;
   sections: MeetingSections;
 }
 

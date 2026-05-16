@@ -6,8 +6,8 @@ jest.mock("@sendgrid/mail", () => ({
   default: { setApiKey: mockSetApiKey, send: mockSend },
 }));
 
-import { sendEmployeeNotification, sendManagerDigest } from "@/lib/notify";
-import type { Employee } from "@/types";
+import { sendEmployeeNotification, sendManagerDigest, sendMeetingSummary } from "@/lib/notify";
+import type { Employee, Meeting } from "@/types";
 
 const emp: Employee = {
   id: "e1", name: "Alice", token: "tok-abc", cadence: "weekly",
@@ -73,6 +73,52 @@ describe("sendManagerDigest", () => {
   it("skips send when MANAGER_EMAIL is missing", async () => {
     delete process.env.MANAGER_EMAIL;
     await sendManagerDigest([{ employee: emp, meetingDate: "2026-05-16" }]);
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});
+
+describe("sendMeetingSummary", () => {
+  const meeting: Meeting = {
+    id: "m1", employeeId: "e1", meetingDate: "2026-05-16", createdAt: "2026-05-16",
+    type: "standard",
+    sections: {
+      whatsOnYourMind: ["Topic A", "Topic B"],
+      winOfWeek: "Launched the feature",
+      workingOn: "Refactoring auth",
+      blockers: "Waiting on design",
+    },
+  };
+
+  it("sends summary to both employee and manager", async () => {
+    await sendMeetingSummary(emp, meeting, []);
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: expect.arrayContaining(["alice@co.com", "mgr@co.com"]),
+        subject: expect.stringContaining("Alice"),
+        html: expect.stringContaining("Launched the feature"),
+      })
+    );
+  });
+
+  it("includes topics in email", async () => {
+    await sendMeetingSummary(emp, meeting, []);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain("Topic A");
+    expect(call.html).toContain("Topic B");
+  });
+
+  it("includes action items", async () => {
+    const items = [
+      { id: "ai1", meetingId: "m1", employeeId: "e1", text: "Follow up with IT", assignee: "manager" as const, completed: false, carriedOver: false, createdAt: "2026-05-16" },
+    ];
+    await sendMeetingSummary(emp, meeting, items);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain("Follow up with IT");
+  });
+
+  it("skips send when SENDGRID_API_KEY is missing", async () => {
+    delete process.env.SENDGRID_API_KEY;
+    await sendMeetingSummary(emp, meeting, []);
     expect(mockSend).not.toHaveBeenCalled();
   });
 });

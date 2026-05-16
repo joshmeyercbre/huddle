@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { headers } from "next/headers";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import type { Employee, Meeting, ActionItem } from "@/types";
 import MeetingEditor from "@/components/MeetingEditor";
@@ -60,6 +61,7 @@ async function getPastMeetings(employeeId: string, currentMeetingId: string) {
 }
 
 export default async function EmployeeMeetingPage({ params }: { params: { token: string } }) {
+  const isManager = !!headers().get("x-ms-client-principal");
   const data = await getPageData(params.token);
 
   if (!data) {
@@ -99,6 +101,7 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
         employeeName={employee.name}
         pastMeetings={pastMeetings}
         prepMode={prepMode}
+        showCompleteButton={isManager && !meeting.completedAt}
       />
     </main>
   );
