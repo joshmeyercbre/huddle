@@ -48,7 +48,7 @@ export default function EmployeeCard({ employee, lastMeeting, nextMeeting }: Pro
       }),
     });
     setStarting(false);
-    if (res.ok) window.location.reload();
+    if (res.ok || res.status === 409) window.location.reload();
   }
 
   async function copyLink() {

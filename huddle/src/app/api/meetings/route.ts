@@ -14,6 +14,16 @@ export async function POST(req: NextRequest) {
 
   const { employeeId, meetingDate, type = "standard" } = await req.json() as { employeeId: string; meetingDate: string; type?: MeetingType };
 
+  const { resources: existing } = await meetingsContainer.items
+    .query<Meeting>({
+      query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate = @date",
+      parameters: [{ name: "@eid", value: employeeId }, { name: "@date", value: meetingDate }],
+    })
+    .fetchAll();
+  if (existing.length > 0) {
+    return Response.json({ error: "A meeting already exists for this date", meeting: existing[0] }, { status: 409 });
+  }
+
   const { resources: previous } = await meetingsContainer.items
     .query<Meeting>({
       query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
