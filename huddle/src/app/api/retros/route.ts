@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     const toCarryOver = allItems.filter((i) => i.isAction && !i.completedAction);
 
-    const created = await Promise.all(
+    await Promise.all(
       toCarryOver.map((item) =>
         retroItemsContainer.items.create<RetroItem>({
           id: crypto.randomUUID(),

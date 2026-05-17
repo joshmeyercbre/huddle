@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { headers } from "next/headers";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
-import { getManagerIdFromHeader, parsePrincipal } from "@/lib/auth";
+import { getManagerIdFromHeader } from "@/lib/auth";
 import type { Employee, Meeting, ActionItem } from "@/types";
 import Link from "next/link";
 import EmployeeCard from "@/components/EmployeeCard";
