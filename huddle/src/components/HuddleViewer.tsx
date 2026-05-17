@@ -36,6 +36,7 @@ export default function HuddleViewer({ currentMeeting, currentActionItems, pastM
               >
                 <span className="flex items-center justify-between gap-2 mb-0.5">
                   <span className="text-sm font-semibold truncate">
+                    {currentMeeting.number ? `#${currentMeeting.number} · ` : ""}
                     {new Date(currentMeeting.meetingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </span>
                   <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0 ${
@@ -71,6 +72,7 @@ export default function HuddleViewer({ currentMeeting, currentActionItems, pastM
                   >
                     <span className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium truncate">
+                        {meeting.number ? `#${meeting.number} · ` : ""}
                         {new Date(meeting.meetingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </span>
                       {openCount > 0 && (

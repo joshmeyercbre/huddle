@@ -43,11 +43,21 @@ async function getPageData(token: string) {
       return buildPageData(employee, todayCheck[0]);
     }
 
+    // Count existing meetings to assign sequential number
+    const { resources: allMeetings } = await meetingsContainer.items
+      .query<Meeting>({
+        query: "SELECT VALUE COUNT(1) FROM c WHERE c.employeeId = @eid",
+        parameters: [{ name: "@eid", value: employee.id }],
+      })
+      .fetchAll();
+    const meetingNumber = ((allMeetings[0] as unknown as number) ?? 0) + 1;
+
     const newMeeting: Meeting = {
       id: crypto.randomUUID(),
       employeeId: employee.id,
       meetingDate: today,
       createdAt: new Date().toISOString(),
+      number: meetingNumber,
       sections: {
         whatsOnYourMind: [],
         workingOn: "",

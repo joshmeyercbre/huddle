@@ -27,7 +27,9 @@ export default function MeetingAccordion({ meeting, actionItems }: Props) {
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition"
       >
         <div>
-          <span className="text-sm font-medium text-gray-800">{dateLabel}</span>
+          <span className="text-sm font-medium text-gray-800">
+            {meeting.number ? `#${meeting.number} · ` : ""}{dateLabel}
+          </span>
           <span className="block text-xs text-gray-400 mt-0.5">{statusLabel}</span>
         </div>
         <svg
