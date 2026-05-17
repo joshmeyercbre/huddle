@@ -47,11 +47,20 @@ export async function POST(req: NextRequest) {
     })
     .fetchAll();
 
+  const { resources: countResult } = await meetingsContainer.items
+    .query<number>({
+      query: "SELECT VALUE COUNT(1) FROM c WHERE c.employeeId = @eid",
+      parameters: [{ name: "@eid", value: body.employeeId }],
+    })
+    .fetchAll();
+  const meetingNumber = ((countResult[0] as unknown as number) ?? 0) + 1;
+
   const meeting: Meeting = {
     id: crypto.randomUUID(),
     employeeId: body.employeeId,
     meetingDate: body.meetingDate,
     createdAt: new Date().toISOString(),
+    number: meetingNumber,
     sections: { ...EMPTY_SECTIONS },
   };
 
