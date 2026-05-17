@@ -1,13 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
-import { meetingsContainer, employeesContainer, actionItemsContainer } from "@/lib/cosmos";
-import { sendMeetingSummary } from "@/lib/notify";
-import { carryOverIncompleteItems } from "@/lib/carryover";
-import { getBonusQuestion } from "@/lib/bonusQuestions";
-import { initialSections, CADENCE_DAYS, nextMeetingNumber } from "@/lib/meetingUtils";
+import { meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";
-import type { Meeting, MeetingSections, Employee, ActionItem } from "@/types";
+import type { Meeting, MeetingSections, ActionItem } from "@/types";
 
 export async function GET(
   _req: NextRequest,
@@ -22,10 +18,18 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const body = await req.json() as Partial<MeetingSections> & { completedAt?: string; sentiment?: 1 | 2 | 3 | 4 | 5; meetingDate?: string };
-  const { completedAt, sentiment, meetingDate: newDate, ...sectionUpdates } = body;
+  const body = await req.json() as Partial<MeetingSections> & {
+    submitted?: boolean;
+    managerShared?: boolean;
+    title?: string;
+    managerNotes?: string;
+    mood?: Meeting["mood"];
+    meetingDate?: string;
+  };
 
-  if (completedAt || newDate) {
+  // Manager-only operations require auth
+  const { managerShared, managerNotes, meetingDate, ...rest } = body;
+  if (managerShared !== undefined || managerNotes !== undefined || meetingDate !== undefined) {
     const authError = requireAuth(req);
     if (authError) return authError;
   }
@@ -33,77 +37,47 @@ export async function PUT(
   const { resource: existing } = await meetingsContainer.item(params.id, params.id).read<Meeting>();
   if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
 
-  const updatedSections = { ...existing.sections, ...sectionUpdates };
-  if (newDate && newDate !== existing.meetingDate && (existing.type ?? "standard") === "standard") {
-    updatedSections.bonusQuestionText = getBonusQuestion(newDate);
-  }
+  const { submitted, title, mood, ...sectionFields } = rest;
 
   const updated: Meeting = {
     ...existing,
-    sections: updatedSections,
-    ...(newDate ? { meetingDate: newDate } : {}),
-    ...(completedAt ? { completedAt } : {}),
-    ...(sentiment !== undefined ? { sentiment } : {}),
+    sections: { ...existing.sections, ...sectionFields },
+    ...(submitted !== undefined ? { submitted } : {}),
+    ...(managerShared !== undefined ? { managerShared } : {}),
+    ...(title !== undefined ? { title } : {}),
+    ...(managerNotes !== undefined ? { managerNotes } : {}),
+    ...(mood !== undefined ? { mood } : {}),
+    ...(meetingDate !== undefined ? { meetingDate } : {}),
   };
 
   const { resource } = await meetingsContainer.item(params.id, params.id).replace<Meeting>(updated);
   if (!resource) return Response.json({ error: "Internal error" }, { status: 500 });
 
-  if (completedAt && !existing.completedAt) {
-    const { resource: employee } = await employeesContainer.item(existing.employeeId, existing.employeeId).read<Employee>();
-    const { resources: actionItems } = await actionItemsContainer.items
-      .query<ActionItem>({
-        query: "SELECT * FROM c WHERE c.meetingId = @mid ORDER BY c.createdAt ASC",
-        parameters: [{ name: "@mid", value: existing.id }],
-      })
-      .fetchAll();
-    if (employee) {
-      try {
-        await sendMeetingSummary(employee, resource, actionItems);
-      } catch {
-        // Email failure must not crash the response — meeting is already saved
-      }
-
-      try {
-        // Auto-create the next meeting if one doesn't already exist
-        const days = CADENCE_DAYS[employee.cadence];
-        const currentDate = new Date(existing.meetingDate);
-        currentDate.setUTCDate(currentDate.getUTCDate() + days);
-        const nextDateStr = currentDate.toISOString().split("T")[0];
-
-        const { resources: future } = await meetingsContainer.items
-          .query<Meeting>({
-            query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate >= @next",
-            parameters: [
-              { name: "@eid", value: existing.employeeId },
-              { name: "@next", value: nextDateStr },
-            ],
-          })
-          .fetchAll();
-
-        if (future.length === 0) {
-          const sections = initialSections("standard");
-          sections.bonusQuestionText = getBonusQuestion(nextDateStr);
-          const number = await nextMeetingNumber(existing.employeeId);
-          const nextMeeting: Meeting = {
-            id: crypto.randomUUID(),
-            employeeId: existing.employeeId,
-            meetingDate: nextDateStr,
-            createdAt: new Date().toISOString(),
-            number,
-            type: "standard",
-            sections,
-          };
-          const { resource: created } = await meetingsContainer.items.create<Meeting>(nextMeeting);
-          if (created) {
-            await carryOverIncompleteItems(existing.id, created.id, existing.employeeId);
-          }
-        }
-      } catch {
-        // Next-meeting creation failure must not crash the response
-      }
-    }
-  }
-
   return Response.json(resource);
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const authError = requireAuth(req);
+  if (authError) return authError;
+
+  const { resource: existing } = await meetingsContainer.item(params.id, params.id).read<Meeting>();
+  if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
+
+  // Delete associated action items
+  const { resources: actionItems } = await actionItemsContainer.items
+    .query<ActionItem>({
+      query: "SELECT * FROM c WHERE c.meetingId = @mid",
+      parameters: [{ name: "@mid", value: params.id }],
+    })
+    .fetchAll();
+
+  await Promise.all(actionItems.map(item =>
+    actionItemsContainer.item(item.id, item.id).delete()
+  ));
+
+  await meetingsContainer.item(params.id, params.id).delete();
+  return Response.json({ ok: true });
 }

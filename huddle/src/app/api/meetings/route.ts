@@ -4,20 +4,36 @@ import { NextRequest } from "next/server";
 import { meetingsContainer } from "@/lib/cosmos";
 import { requireAuth } from "@/lib/auth";
 import { carryOverIncompleteItems } from "@/lib/carryover";
-import { getBonusQuestion } from "@/lib/bonusQuestions";
-import { initialSections, nextMeetingNumber } from "@/lib/meetingUtils";
-import type { Meeting, MeetingType } from "@/types";
+import type { Meeting } from "@/types";
+
+const EMPTY_SECTIONS = {
+  whatsOnYourMind: [] as string[],
+  workingOn: "",
+  blockers: "",
+  growthFocus: "",
+  supportNeeded: "",
+  feedbackForManager: "",
+  wantFeedbackOn: "",
+  goingWellManager: "",
+  areaToFocusManager: "",
+  feedbackForManagerResponse: "",
+  wantFeedbackOnResponse: "",
+};
 
 export async function POST(req: NextRequest) {
   const authError = requireAuth(req);
   if (authError) return authError;
 
-  const { employeeId, meetingDate, type = "standard" } = await req.json() as { employeeId: string; meetingDate: string; type?: MeetingType };
+  const body = await req.json() as { employeeId?: string; meetingDate?: string };
+  if (!body.employeeId || !body.meetingDate) {
+    return Response.json({ error: "employeeId and meetingDate are required" }, { status: 400 });
+  }
 
+  // Prevent duplicate meetings for the same date
   const { resources: existing } = await meetingsContainer.items
     .query<Meeting>({
       query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate = @date",
-      parameters: [{ name: "@eid", value: employeeId }, { name: "@date", value: meetingDate }],
+      parameters: [{ name: "@eid", value: body.employeeId }, { name: "@date", value: body.meetingDate }],
     })
     .fetchAll();
   if (existing.length > 0) {
@@ -27,33 +43,23 @@ export async function POST(req: NextRequest) {
   const { resources: previous } = await meetingsContainer.items
     .query<Meeting>({
       query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
-      parameters: [{ name: "@eid", value: employeeId }],
+      parameters: [{ name: "@eid", value: body.employeeId }],
     })
     .fetchAll();
 
-  const [sections, number] = await Promise.all([
-    Promise.resolve(initialSections(type)),
-    nextMeetingNumber(employeeId),
-  ]);
-  if (type === "standard") {
-    sections.bonusQuestionText = getBonusQuestion(meetingDate);
-  }
-
   const meeting: Meeting = {
     id: crypto.randomUUID(),
-    employeeId,
-    meetingDate,
+    employeeId: body.employeeId,
+    meetingDate: body.meetingDate,
     createdAt: new Date().toISOString(),
-    number,
-    type,
-    sections,
+    sections: { ...EMPTY_SECTIONS },
   };
 
   const { resource } = await meetingsContainer.items.create<Meeting>(meeting);
   if (!resource) return Response.json({ error: "Internal error" }, { status: 500 });
 
   if (previous.length > 0) {
-    await carryOverIncompleteItems(previous[0].id, resource.id, employeeId);
+    await carryOverIncompleteItems(previous[0].id, resource.id, body.employeeId);
   }
 
   return Response.json(resource, { status: 201 });

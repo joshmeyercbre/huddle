@@ -11,6 +11,12 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        cbre: {
+          green: "#003F2D",
+          mint: "#17E88F",
+          "mint-light": "#E6FAF2",
+          "green-light": "#E8F0EE",
+        },
       },
     },
   },

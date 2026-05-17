@@ -1,10 +1,3 @@
-export type TopicTag = "feedback" | "decision" | "fyi" | "career";
-
-export interface Topic {
-  text: string;
-  tag?: TopicTag;
-}
-
 export interface Employee {
   id: string;
   name: string;
@@ -13,29 +6,21 @@ export interface Employee {
   email?: string;
   notifyDaysBefore?: 0 | 1;
   createdAt: string;
+  managerId: string;
 }
 
-export type MeetingType = "standard" | "quarterly" | "onboarding";
-
 export interface MeetingSections {
-  // standard
-  whatsOnYourMind: (string | Topic)[];
-  winOfWeek: string;
+  whatsOnYourMind: string[];
   workingOn: string;
   blockers: string;
-  // quarterly
-  winsThisQuarter?: string;
-  goalsReview?: string;
-  careerDevelopment?: string;
-  nextQuarterPriorities?: string;
-  // onboarding
-  howIsItGoing?: string;
-  whatIsWorkingWell?: string;
-  whatIsUnclear?: string;
-  whatDoYouNeed?: string;
-  // rotating bonus question (standard meetings only)
-  bonusQuestionText?: string;
-  bonusQuestionAnswer?: string;
+  growthFocus: string;
+  supportNeeded: string;
+  feedbackForManager: string;
+  wantFeedbackOn: string;
+  goingWellManager: string;
+  areaToFocusManager: string;
+  feedbackForManagerResponse: string;
+  wantFeedbackOnResponse: string;
 }
 
 export interface Meeting {
@@ -44,11 +29,17 @@ export interface Meeting {
   meetingDate: string;
   createdAt: string;
   number?: number;
-  type?: MeetingType;
   completedAt?: string;
   sentiment?: 1 | 2 | 3 | 4 | 5;
   sections: MeetingSections;
+  mood?: "great" | "good" | "okay" | "tough" | "struggling";
+  submitted?: boolean;
+  managerShared?: boolean;
+  title?: string;
+  managerNotes?: string;
 }
+
+export type Priority = "high" | "medium" | "low";
 
 export interface ActionItem {
   id: string;
@@ -58,5 +49,39 @@ export interface ActionItem {
   assignee: "manager" | "employee";
   completed: boolean;
   carriedOver: boolean;
+  priority?: Priority;
   createdAt: string;
+}
+
+export type RetroFormat = "classic" | "start_stop_continue" | "mad_sad_glad";
+
+export interface Retro {
+  id: string;
+  token: string;
+  title?: string;
+  sprintName: string;
+  managerId: string;
+  status: "open" | "closed";
+  format?: RetroFormat;
+  timerEndsAt?: string;
+  timerDurationMs?: number;
+  createdAt: string;
+}
+
+export interface RetroItem {
+  id: string;
+  retroId: string;
+  category: string;
+  text: string;
+  authorName: string;
+  votes: number;
+  isAction?: boolean;
+  completedAction?: boolean;
+  priority?: Priority;
+  createdAt: string;
+}
+
+export interface TeamSettings {
+  id: string;
+  teamToken: string;
 }

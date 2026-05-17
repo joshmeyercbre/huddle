@@ -1,9 +1,5 @@
 import sgMail from "@sendgrid/mail";
-import type { Employee, Meeting, ActionItem, MeetingSections, Topic, TopicTag } from "@/types";
-
-const TAG_LABELS: Record<TopicTag, string> = {
-  feedback: "Feedback", decision: "Decision", fyi: "FYI", career: "Career",
-};
+import type { Employee, Meeting, ActionItem } from "@/types";
 
 function init() {
   const key = process.env.SENDGRID_API_KEY;
@@ -32,72 +28,6 @@ export async function sendEmployeeNotification(employee: Employee, meetingDate: 
     html: `<p>Hi ${employee.name},</p>
 <p>Your 1-on-1 is scheduled for <strong>${meetingDate}</strong>.</p>
 <p><a href="${baseUrl()}/huddle/${employee.token}">Open your prep page</a> to add topics and review action items before the meeting.</p>`,
-  });
-}
-
-const SECTION_LABELS: Partial<Record<keyof MeetingSections, string>> = {
-  winOfWeek: "Win of the week",
-  workingOn: "What are you working on?",
-  blockers: "Blockers & follow-ups",
-  winsThisQuarter: "Wins this quarter",
-  goalsReview: "Goals review",
-  careerDevelopment: "Career development",
-  nextQuarterPriorities: "Next quarter priorities",
-  howIsItGoing: "How's it going?",
-  whatIsWorkingWell: "What's working well?",
-  whatIsUnclear: "What's unclear?",
-  whatDoYouNeed: "What do you need?",
-};
-
-export async function sendMeetingSummary(
-  employee: Employee,
-  meeting: Meeting,
-  actionItems: ActionItem[]
-): Promise<void> {
-  if (!init()) return;
-  const managerEmail = process.env.MANAGER_EMAIL;
-  const recipients = [managerEmail, employee.email].filter(Boolean) as string[];
-  if (recipients.length === 0) return;
-
-  const date = new Date(meeting.meetingDate).toLocaleDateString("en-US", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-  });
-
-  const sectionRows: string[] = [];
-
-  if (meeting.sections.whatsOnYourMind.length > 0) {
-    const topicItems = meeting.sections.whatsOnYourMind.map((t) => {
-      const topic: Topic = typeof t === "string" ? { text: t } : t;
-      const tag = topic.tag ? ` <em style="color:#6b7280">[${TAG_LABELS[topic.tag]}]</em>` : "";
-      return `<li>${topic.text}${tag}</li>`;
-    }).join("");
-    sectionRows.push(`<p><strong>What's on your mind?</strong></p><ul>${topicItems}</ul>`);
-  }
-
-  for (const [key, label] of Object.entries(SECTION_LABELS)) {
-    const value = meeting.sections[key as keyof MeetingSections];
-    if (typeof value === "string" && value.trim()) {
-      sectionRows.push(`<p><strong>${label}</strong></p><p>${value}</p>`);
-    }
-  }
-
-  const itemRows = actionItems
-    .map((i) => `<li>${i.completed ? "✓" : "☐"} ${i.text} <em>(${i.assignee === "manager" ? "Manager" : employee.name})</em></li>`)
-    .join("");
-
-  const prepUrl = `${baseUrl()}/huddle/${employee.token}`;
-  const html = `<h2>1-on-1 summary — ${employee.name}</h2>
-<p>${date}</p>
-${sectionRows.join("")}
-${actionItems.length > 0 ? `<p><strong>Action items</strong></p><ul>${itemRows}</ul>` : ""}
-<hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb">
-<p style="color:#6b7280;font-size:14px">Thought of something to cover next time? <a href="${prepUrl}" style="color:#4f46e5">Add a topic →</a></p>`;
-
-  await sgMail.send({
-    to: recipients,
-    from: from(),
-    subject: `1-on-1 summary${meeting.number ? ` #${meeting.number}` : ""} — ${employee.name} — ${date}`,
-    html,
   });
 }
 
@@ -136,5 +66,53 @@ export async function sendManagerDigest(
     from: from(),
     subject: `${count} 1-on-1${count > 1 ? "s" : ""} coming up — time to prepare`,
     html: `<p>The following 1-on-1s are scheduled. Click a name to open the meeting and add your own prep notes.</p><ul>${rows}</ul>`,
+  });
+}
+
+export async function sendMeetingSummary(
+  employee: Employee,
+  meeting: Meeting,
+  actionItems: ActionItem[]
+): Promise<void> {
+  if (!init()) return;
+  const managerEmail = process.env.MANAGER_EMAIL;
+  const recipients = [managerEmail, employee.email].filter(Boolean) as string[];
+  if (recipients.length === 0) return;
+
+  const date = new Date(meeting.meetingDate).toLocaleDateString("en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
+
+  const s = meeting.sections;
+  const rows: string[] = [];
+
+  if (s.whatsOnYourMind.length > 0) {
+    const items = s.whatsOnYourMind.map((t) => `<li>${t}</li>`).join("");
+    rows.push(`<p><strong>What's on your mind?</strong></p><ul>${items}</ul>`);
+  }
+  if (s.workingOn) rows.push(`<p><strong>Working on</strong></p><p>${s.workingOn}</p>`);
+  if (s.blockers) rows.push(`<p><strong>Blockers</strong></p><p>${s.blockers}</p>`);
+  if (s.growthFocus) rows.push(`<p><strong>Growth focus</strong></p><p>${s.growthFocus}</p>`);
+  if (s.supportNeeded) rows.push(`<p><strong>Support needed</strong></p><p>${s.supportNeeded}</p>`);
+  if (s.feedbackForManager) rows.push(`<p><strong>Feedback for manager</strong></p><p>${s.feedbackForManager}</p>`);
+  if (s.wantFeedbackOn) rows.push(`<p><strong>Wants feedback on</strong></p><p>${s.wantFeedbackOn}</p>`);
+
+  const itemRows = actionItems
+    .map((i) => `<li>${i.completed ? "✓" : "☐"} ${i.text} <em>(${i.assignee === "manager" ? "Manager" : employee.name})</em></li>`)
+    .join("");
+
+  const prepUrl = `${baseUrl()}/huddle/${employee.token}`;
+  const html = `<h2>1-on-1 summary — ${employee.name}</h2>
+<p>${date}</p>
+${rows.join("")}
+${actionItems.length > 0 ? `<p><strong>Action items</strong></p><ul>${itemRows}</ul>` : ""}
+<hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb">
+<p style="color:#6b7280;font-size:14px">Thought of something to cover next time? <a href="${prepUrl}" style="color:#4f46e5">Add a topic →</a></p>`;
+
+  await sgMail.send({
+    to: recipients,
+    from: from(),
+    subject: `1-on-1 summary${meeting.number ? ` #${meeting.number}` : ""} — ${employee.name} — ${date}`,
+    html,
   });
 }

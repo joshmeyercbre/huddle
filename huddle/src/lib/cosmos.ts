@@ -44,6 +44,13 @@ function makeContainerProxy(getContainer: () => Container): Container {
   });
 }
 
+export function getRetrosContainer(): Container { return getDb().container("retros"); }
+export function getRetroItemsContainer(): Container { return getDb().container("retroItems"); }
+export function getTeamSettingsContainer(): Container { return getDb().container("teamSettings"); }
+
 export const employeesContainer = makeContainerProxy(getEmployeesContainer);
 export const meetingsContainer = makeContainerProxy(getMeetingsContainer);
 export const actionItemsContainer = makeContainerProxy(getActionItemsContainer);
+export const retrosContainer = makeContainerProxy(getRetrosContainer);
+export const retroItemsContainer = makeContainerProxy(getRetroItemsContainer);
+export const teamSettingsContainer = makeContainerProxy(getTeamSettingsContainer);
