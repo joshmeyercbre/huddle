@@ -7,8 +7,9 @@ export interface ClientPrincipal {
   userRoles: string[];
 }
 
-export function getClientPrincipal(req: NextRequest): ClientPrincipal | null {
-  const header = req.headers.get("x-ms-client-principal");
+const DEV_MANAGER_ID = "dev-manager";
+
+export function parsePrincipal(header: string | null): ClientPrincipal | null {
   if (!header) return null;
   try {
     return JSON.parse(Buffer.from(header, "base64").toString("utf-8")) as ClientPrincipal;
@@ -17,7 +18,26 @@ export function getClientPrincipal(req: NextRequest): ClientPrincipal | null {
   }
 }
 
+export function getClientPrincipal(req: NextRequest): ClientPrincipal | null {
+  return parsePrincipal(req.headers.get("x-ms-client-principal"));
+}
+
+export function getManagerId(req: NextRequest): string {
+  if (process.env.NODE_ENV === "development") return DEV_MANAGER_ID;
+  const principal = parsePrincipal(req.headers.get("x-ms-client-principal"));
+  if (!principal) return "";
+  return principal.userId;
+}
+
+export function getManagerIdFromHeader(header: string | null): string {
+  if (process.env.NODE_ENV === "development") return DEV_MANAGER_ID;
+  const principal = parsePrincipal(header);
+  if (!principal) return "";
+  return principal.userId;
+}
+
 export function requireAuth(req: NextRequest): Response | null {
+  if (process.env.NODE_ENV === "development") return null;
   if (!getClientPrincipal(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

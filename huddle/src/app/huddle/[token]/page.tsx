@@ -2,9 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { headers } from "next/headers";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
+import { parsePrincipal } from "@/lib/auth";
+import { carryOverIncompleteItems } from "@/lib/carryover";
 import type { Employee, Meeting, ActionItem } from "@/types";
-import MeetingEditor from "@/components/MeetingEditor";
-import MeetingDateEditor from "@/components/MeetingDateEditor";
+import HuddleViewer from "@/components/HuddleViewer";
 
 async function getPageData(token: string) {
   const { resources: employees } = await employeesContainer.items
@@ -24,16 +25,80 @@ async function getPageData(token: string) {
     })
     .fetchAll();
 
-  if (meetings.length === 0) return { employee, meeting: null, actionItems: [] as ActionItem[] };
-  const meeting = meetings[0];
+  const lastMeeting = meetings[0] ?? null;
 
+  // Create a new meeting if none exists or if the last one is old enough
+  if (shouldCreateMeeting(lastMeeting, employee.cadence)) {
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Guard against duplicates: re-check if a meeting for today already exists
+    const { resources: todayCheck } = await meetingsContainer.items
+      .query<Meeting>({
+        query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate = @today",
+        parameters: [{ name: "@eid", value: employee.id }, { name: "@today", value: today }],
+      })
+      .fetchAll();
+
+    if (todayCheck.length > 0) {
+      return buildPageData(employee, todayCheck[0]);
+    }
+
+    const newMeeting: Meeting = {
+      id: crypto.randomUUID(),
+      employeeId: employee.id,
+      meetingDate: today,
+      createdAt: new Date().toISOString(),
+      sections: {
+        whatsOnYourMind: [],
+        workingOn: "",
+        blockers: "",
+        growthFocus: "",
+        supportNeeded: "",
+        feedbackForManager: "",
+        wantFeedbackOn: "",
+        goingWellManager: "",
+        areaToFocusManager: "",
+        feedbackForManagerResponse: "",
+        wantFeedbackOnResponse: "",
+      },
+    };
+
+    try {
+      await meetingsContainer.items.create(newMeeting);
+      if (lastMeeting) await carryOverIncompleteItems(lastMeeting.id, newMeeting.id, employee.id);
+    } catch {
+      // If create failed (e.g. duplicate from race condition), fall through to fetch existing
+      const { resources: fallback } = await meetingsContainer.items
+        .query<Meeting>({
+          query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
+          parameters: [{ name: "@eid", value: employee.id }],
+        })
+        .fetchAll();
+      if (fallback[0]) return buildPageData(employee, fallback[0]);
+    }
+
+    return buildPageData(employee, newMeeting);
+  }
+
+  return buildPageData(employee, lastMeeting!);
+}
+
+function shouldCreateMeeting(lastMeeting: Meeting | null, cadence: string): boolean {
+  if (!lastMeeting) return true;
+  const today = new Date().toISOString().slice(0, 10);
+  if (lastMeeting.meetingDate === today) return false;
+  const cadenceDays = cadence === "biweekly" ? 14 : 7;
+  const daysSinceLast = (Date.now() - new Date(lastMeeting.meetingDate).getTime()) / (1000 * 60 * 60 * 24);
+  return daysSinceLast >= cadenceDays;
+}
+
+async function buildPageData(employee: Employee, meeting: Meeting) {
   const { resources: actionItems } = await actionItemsContainer.items
     .query<ActionItem>({
       query: "SELECT * FROM c WHERE c.meetingId = @mid ORDER BY c.createdAt ASC",
       parameters: [{ name: "@mid", value: meeting.id }],
     })
     .fetchAll();
-
   return { employee, meeting, actionItems };
 }
 
@@ -62,7 +127,7 @@ async function getPastMeetings(employeeId: string, currentMeetingId: string) {
 }
 
 export default async function EmployeeMeetingPage({ params }: { params: { token: string } }) {
-  const isManager = !!headers().get("x-ms-client-principal");
+  const principalHeader = headers().get("x-ms-client-principal");
   const data = await getPageData(params.token);
 
   if (!data) {
@@ -75,38 +140,42 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
 
   const { employee, meeting, actionItems } = data;
 
-  if (!meeting) {
-    return (
-      <main className="max-w-xl mx-auto px-6 py-16 text-center">
-        <p className="text-gray-500">No upcoming meeting scheduled yet — check back soon.</p>
-      </main>
-    );
-  }
+  // Only the employee's assigned manager gets manager privileges
+  const authenticatedUserId = parsePrincipal(principalHeader)?.userId ?? null;
+  const isManager =
+    process.env.NODE_ENV === "development" ||
+    (authenticatedUserId !== null && authenticatedUserId === employee.managerId);
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const prepMode = meeting.meetingDate > todayStr;
   const pastMeetings = await getPastMeetings(employee.id, meeting.id);
 
   return (
-    <main className="max-w-2xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{employee.name}</h1>
-        <MeetingDateEditor
-          meetingId={meeting.id}
-          meetingDate={meeting.meetingDate}
-          isManager={isManager}
-          completed={!!meeting.completedAt}
-        />
-      </div>
-      <MeetingEditor
-        meeting={meeting}
-        actionItems={actionItems}
+    <div className="h-screen flex flex-col overflow-hidden">
+      <header className="bg-cbre-green px-6 py-4 flex items-center gap-3">
+        <div className="w-2 h-8 bg-cbre-mint rounded-sm" />
+        <div className="flex items-center gap-6 flex-1">
+          <span className="text-xl font-bold text-white tracking-tight">Huddle</span>
+          <span className="text-white/40">|</span>
+          <div>
+            <span className="text-white font-medium">{employee.name}</span>
+            <span className="text-white/50 text-sm ml-3">
+              {new Date(meeting.meetingDate).toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <HuddleViewer
+        currentMeeting={meeting}
+        currentActionItems={actionItems}
+        pastMeetings={pastMeetings}
         employeeId={employee.id}
         employeeName={employee.name}
-        pastMeetings={pastMeetings}
-        prepMode={prepMode}
-        showCompleteButton={isManager && !meeting.completedAt}
+        isManager={isManager}
       />
-    </main>
+    </div>
   );
 }

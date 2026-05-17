@@ -17,6 +17,26 @@
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/retro/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/retro-items/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/board/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/team/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/team/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
       "route": "/api/*",
       "allowedRoles": ["authenticated"]
     },

@@ -3,12 +3,23 @@ export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { employeesContainer, meetingsContainer } from "@/lib/cosmos";
 import { carryOverIncompleteItems } from "@/lib/carryover";
-import { sendEmployeeNotification, sendManagerDigest } from "@/lib/notify";
-import { initialSections, nextMeetingNumber } from "@/lib/meetingUtils";
-import { getBonusQuestion } from "@/lib/bonusQuestions";
 import type { Employee, Meeting } from "@/types";
 
 const CADENCE_DAYS: Record<Employee["cadence"], number> = { weekly: 7, biweekly: 14 };
+
+const EMPTY_SECTIONS = {
+  whatsOnYourMind: [] as string[],
+  workingOn: "",
+  blockers: "",
+  growthFocus: "",
+  supportNeeded: "",
+  feedbackForManager: "",
+  wantFeedbackOn: "",
+  goingWellManager: "",
+  areaToFocusManager: "",
+  feedbackForManagerResponse: "",
+  wantFeedbackOnResponse: "",
+};
 
 export async function POST(req: NextRequest) {
   const secret = process.env.SCHEDULE_SECRET;
@@ -25,13 +36,9 @@ export async function POST(req: NextRequest) {
 
   let created = 0;
   let skipped = 0;
-  const digestEntries: { employee: Employee; meetingDate: string }[] = [];
 
   for (const employee of employees) {
-    const notifyDays = employee.notifyDaysBefore ?? 0;
-    const meetingDay = new Date(today);
-    meetingDay.setUTCDate(meetingDay.getUTCDate() + notifyDays);
-    const meetingDateStr = meetingDay.toISOString().split("T")[0];
+    const meetingDateStr = today.toISOString().split("T")[0];
 
     const { resources: meetings } = await meetingsContainer.items
       .query<Meeting>({
@@ -43,46 +50,26 @@ export async function POST(req: NextRequest) {
     const last = meetings[0] ?? null;
 
     if (last) {
-      if (last.meetingDate.startsWith(meetingDateStr)) {
-        skipped++;
-        continue;
-      }
+      if (last.meetingDate === meetingDateStr) { skipped++; continue; }
       const lastDate = new Date(last.meetingDate);
       lastDate.setUTCHours(0, 0, 0, 0);
       const daysSince = Math.floor((today.getTime() - lastDate.getTime()) / 86_400_000);
-      if (daysSince + notifyDays < CADENCE_DAYS[employee.cadence]) {
-        skipped++;
-        continue;
-      }
+      if (daysSince < CADENCE_DAYS[employee.cadence]) { skipped++; continue; }
     }
-
-    const sections = initialSections("standard");
-    sections.bonusQuestionText = getBonusQuestion(meetingDateStr);
-    const number = await nextMeetingNumber(employee.id);
 
     const meeting: Meeting = {
       id: crypto.randomUUID(),
       employeeId: employee.id,
       meetingDate: meetingDateStr,
       createdAt: new Date().toISOString(),
-      number,
-      type: "standard",
-      sections,
+      sections: { ...EMPTY_SECTIONS },
     };
 
     const { resource } = await meetingsContainer.items.create<Meeting>(meeting);
     if (!resource) continue;
-
-    if (last) {
-      await carryOverIncompleteItems(last.id, resource.id, employee.id);
-    }
-
-    await sendEmployeeNotification(employee, meetingDateStr);
-    digestEntries.push({ employee, meetingDate: meetingDateStr });
+    if (last) await carryOverIncompleteItems(last.id, resource.id, employee.id);
     created++;
   }
-
-  await sendManagerDigest(digestEntries);
 
   return Response.json({ created, skipped });
 }
