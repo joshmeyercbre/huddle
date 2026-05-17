@@ -18,7 +18,8 @@ interface Props {
 
 
 export default function MeetingEditor({ meeting, actionItems: initialItems, employeeId, employeeName, isManager, reviewMode = false, onEnterReview, onExitReview }: Props) {
-  const [sections, setSections] = useState<MeetingSections>({
+  const defaultSections: MeetingSections = {
+    whatsOnYourMind: [],
     workingOn: "",
     blockers: "",
     growthFocus: "",
@@ -29,8 +30,8 @@ export default function MeetingEditor({ meeting, actionItems: initialItems, empl
     areaToFocusManager: "",
     feedbackForManagerResponse: "",
     wantFeedbackOnResponse: "",
-    ...meeting.sections,
-  });
+  };
+  const [sections, setSections] = useState<MeetingSections>({ ...defaultSections, ...meeting.sections });
   const [items, setItems] = useState<ActionItem[]>(initialItems);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [submitted, setSubmitted] = useState(meeting.submitted ?? false);
