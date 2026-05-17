@@ -1,2 +1,2 @@
-cd "C:\Users\Josh\Documents\huddle-app"
+cd "C:\Users\Josh\Documents\claude-working\huddle-app"
 git push origin main

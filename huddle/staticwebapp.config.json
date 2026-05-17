@@ -1,0 +1,58 @@
+{
+  "routes": [
+    {
+      "route": "/huddle/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/huddle/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/meetings/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/action-items/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/retro/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/retro-items/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/board/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/team/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/team/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["authenticated"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["authenticated"]
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "redirect": "/.auth/login/aad",
+      "statusCode": 302
+    }
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN"
+  }
+}
