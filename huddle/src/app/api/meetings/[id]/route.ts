@@ -17,11 +17,20 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const body = await req.json() as Partial<MeetingSections>;
+  const body = await req.json() as Partial<Omit<MeetingSections, "whatsOnYourMind">> & { whatsOnYourMind?: string[]; submitted?: boolean; managerShared?: boolean; title?: string; managerNotes?: string; mood?: Meeting["mood"] };
   const { resource: existing } = await meetingsContainer.item(params.id, params.id).read<Meeting>();
   if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
 
-  const updated: Meeting = { ...existing, sections: { ...existing.sections, ...body } };
+  const { submitted, managerShared, title, managerNotes, mood, ...sectionFields } = body;
+  const updated: Meeting = {
+    ...existing,
+    sections: { ...existing.sections, ...sectionFields },
+    ...(submitted !== undefined ? { submitted } : {}),
+    ...(managerShared !== undefined ? { managerShared } : {}),
+    ...(title !== undefined ? { title } : {}),
+    ...(managerNotes !== undefined ? { managerNotes } : {}),
+    ...(mood !== undefined ? { mood } : {}),
+  };
   const { resource } = await meetingsContainer.item(params.id, params.id).replace<Meeting>(updated);
   if (!resource) return Response.json({ error: "Internal error" }, { status: 500 });
   return Response.json(resource);

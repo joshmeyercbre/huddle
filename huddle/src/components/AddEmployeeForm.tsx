@@ -1,7 +1,9 @@
 "use client";
+
 import { useState } from "react";
 
-export default function AddEmployeeForm() {
+export default function AddEmployeeForm({ onAdded }: { onAdded?: () => void }) {
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [cadence, setCadence] = useState<"weekly" | "biweekly">("weekly");
   const [saving, setSaving] = useState(false);
@@ -18,38 +20,49 @@ export default function AddEmployeeForm() {
     setSaving(false);
     if (res.ok) {
       setName("");
+      setOpen(false);
+      onAdded?.();
       window.location.reload();
     }
   }
 
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-cbre-green transition-colors"
+      >
+        <span className="text-lg leading-none">+</span> Add member
+      </button>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 items-end flex-wrap">
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-600">Name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Employee name"
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-600">Cadence</label>
-        <select
-          value={cadence}
-          onChange={(e) => setCadence(e.target.value as "weekly" | "biweekly")}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-        >
-          <option value="weekly">Weekly</option>
-          <option value="biweekly">Bi-weekly</option>
-        </select>
-      </div>
+    <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-wrap">
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Name"
+        autoFocus
+        className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-cbre-mint"
+      />
+      <select
+        value={cadence}
+        onChange={(e) => setCadence(e.target.value as "weekly" | "biweekly")}
+        className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-cbre-mint"
+      >
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Bi-weekly</option>
+      </select>
       <button
         type="submit"
         disabled={saving || !name.trim()}
-        className="bg-gray-900 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-700 transition disabled:opacity-50"
+        className="bg-cbre-green text-white text-sm font-medium px-4 py-1.5 rounded-lg hover:bg-cbre-mint hover:text-cbre-green transition-colors disabled:opacity-50"
       >
-        {saving ? "Adding…" : "Add Employee"}
+        {saving ? "Adding…" : "Add"}
+      </button>
+      <button type="button" onClick={() => setOpen(false)} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+        Cancel
       </button>
     </form>
   );
