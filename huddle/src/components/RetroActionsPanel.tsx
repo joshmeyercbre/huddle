@@ -15,10 +15,10 @@ const PRIORITY_STYLE: Record<Priority, { label: string; classes: string }> = {
 
 const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
 
-function sortByPriority<T extends { priority?: Priority }>(items: T[]): T[] {
+function sortEntriesByPriority(items: Entry[]): Entry[] {
   return [...items].sort((a, b) => {
-    const pa = a.priority !== undefined ? PRIORITY_ORDER[a.priority] : 99;
-    const pb = b.priority !== undefined ? PRIORITY_ORDER[b.priority] : 99;
+    const pa = a.item.priority !== undefined ? PRIORITY_ORDER[a.item.priority] : 99;
+    const pb = b.item.priority !== undefined ? PRIORITY_ORDER[b.item.priority] : 99;
     return pa - pb;
   });
 }
@@ -83,7 +83,7 @@ export default function RetroActionsPanel({ initial }: { initial: Entry[] }) {
     }
   }
 
-  const open = sortByPriority(entries.filter(({ item }) => !item.completedAction));
+  const open = sortEntriesByPriority(entries.filter(({ item }) => !item.completedAction));
   const done = entries.filter(({ item }) => item.completedAction);
 
   const visibleOpen = open.slice(0, openPage * PAGE_SIZE);
