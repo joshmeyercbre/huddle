@@ -65,6 +65,8 @@ export default async function DashboardPage() {
         <div className="w-2 h-8 bg-cbre-mint rounded-sm" />
         <div className="flex items-center gap-6 flex-1">
           <h1 className="text-xl font-bold text-white tracking-tight">Huddle</h1>
+          <span className="text-white/40">|</span>
+          <Link href="/health" className="text-sm font-medium text-white/70 hover:text-white transition-colors">Team Health</Link>
         </div>
       </header>
 

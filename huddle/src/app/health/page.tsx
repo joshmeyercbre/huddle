@@ -1,7 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { headers } from "next/headers";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
+import { getManagerIdFromHeader } from "@/lib/auth";
 import type { Employee, Meeting, ActionItem } from "@/types";
 
 const CADENCE_DAYS = { weekly: 7, biweekly: 14 };
@@ -43,10 +45,15 @@ function computeStatus(employee: Employee, lastMeeting: Meeting | null, todayStr
   return { status, daysSinceLast, daysUntilDue, hasUpcoming };
 }
 
-async function getHealthData(): Promise<EmployeeHealth[]> {
+async function getHealthData(managerId: string): Promise<EmployeeHealth[]> {
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const { resources: employees } = await employeesContainer.items.readAll<Employee>().fetchAll();
+  const { resources: employees } = await employeesContainer.items
+    .query<Employee>({
+      query: "SELECT * FROM c WHERE c.managerId = @mid",
+      parameters: [{ name: "@mid", value: managerId }],
+    })
+    .fetchAll();
 
   const { resources: allOpenItems } = await actionItemsContainer.items
     .query<ActionItem>("SELECT * FROM c WHERE c.completed = false")
@@ -133,7 +140,8 @@ function SentimentDots({ history }: { history: (1 | 2 | 3 | 4 | 5)[] }) {
 }
 
 export default async function HealthPage() {
-  const data = await getHealthData();
+  const managerId = getManagerIdFromHeader(headers().get("x-ms-client-principal"));
+  const data = await getHealthData(managerId);
 
   const counts = { "on-track": 0, "due-soon": 0, overdue: 0, new: 0 };
   for (const { status } of data) counts[status]++;

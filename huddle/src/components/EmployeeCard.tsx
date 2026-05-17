@@ -39,6 +39,7 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
           <Link href={`/employee/${employee.id}`} className="font-semibold text-cbre-green hover:underline">
             {employee.name}
           </Link>
+          <p className="text-xs font-mono text-gray-400 mt-0.5">#{employee.id.slice(0, 8)}</p>
           <p className="text-sm text-gray-500 capitalize mt-0.5">{employee.cadence}</p>
         </div>
         <button
