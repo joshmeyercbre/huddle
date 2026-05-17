@@ -29,17 +29,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "employeeId and meetingDate are required" }, { status: 400 });
   }
 
-  // Prevent duplicate meetings for the same date
-  const { resources: existing } = await meetingsContainer.items
-    .query<Meeting>({
-      query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate = @date",
-      parameters: [{ name: "@eid", value: body.employeeId }, { name: "@date", value: body.meetingDate }],
-    })
-    .fetchAll();
-  if (existing.length > 0) {
-    return Response.json({ error: "A meeting already exists for this date", meeting: existing[0] }, { status: 409 });
-  }
-
   const { resources: previous } = await meetingsContainer.items
     .query<Meeting>({
       query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",

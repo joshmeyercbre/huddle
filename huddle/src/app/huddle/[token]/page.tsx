@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { headers } from "next/headers";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import { parsePrincipal } from "@/lib/auth";
-import { carryOverIncompleteItems } from "@/lib/carryover";
 import type { Employee, Meeting, ActionItem } from "@/types";
 import HuddleViewer from "@/components/HuddleViewer";
 
@@ -27,37 +26,15 @@ async function getPageData(token: string) {
 
   const lastMeeting = meetings[0] ?? null;
 
-  // Create a new meeting if none exists or if the last one is old enough
-  if (shouldCreateMeeting(lastMeeting, employee.cadence)) {
+  // Auto-create first meeting if employee has none yet
+  if (!lastMeeting) {
     const today = new Date().toISOString().slice(0, 10);
-
-    // Guard against duplicates: re-check if a meeting for today already exists
-    const { resources: todayCheck } = await meetingsContainer.items
-      .query<Meeting>({
-        query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate = @today",
-        parameters: [{ name: "@eid", value: employee.id }, { name: "@today", value: today }],
-      })
-      .fetchAll();
-
-    if (todayCheck.length > 0) {
-      return buildPageData(employee, todayCheck[0]);
-    }
-
-    // Count existing meetings to assign sequential number
-    const { resources: allMeetings } = await meetingsContainer.items
-      .query<Meeting>({
-        query: "SELECT VALUE COUNT(1) FROM c WHERE c.employeeId = @eid",
-        parameters: [{ name: "@eid", value: employee.id }],
-      })
-      .fetchAll();
-    const meetingNumber = ((allMeetings[0] as unknown as number) ?? 0) + 1;
-
     const newMeeting: Meeting = {
       id: crypto.randomUUID(),
       employeeId: employee.id,
       meetingDate: today,
       createdAt: new Date().toISOString(),
-      number: meetingNumber,
+      number: 1,
       sections: {
         whatsOnYourMind: [],
         workingOn: "",
@@ -72,12 +49,9 @@ async function getPageData(token: string) {
         wantFeedbackOnResponse: "",
       },
     };
-
     try {
       await meetingsContainer.items.create(newMeeting);
-      if (lastMeeting) await carryOverIncompleteItems(lastMeeting.id, newMeeting.id, employee.id);
     } catch {
-      // If create failed (e.g. duplicate from race condition), fall through to fetch existing
       const { resources: fallback } = await meetingsContainer.items
         .query<Meeting>({
           query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
@@ -86,21 +60,12 @@ async function getPageData(token: string) {
         .fetchAll();
       if (fallback[0]) return buildPageData(employee, fallback[0]);
     }
-
     return buildPageData(employee, newMeeting);
   }
 
-  return buildPageData(employee, lastMeeting!);
+  return buildPageData(employee, lastMeeting);
 }
 
-function shouldCreateMeeting(lastMeeting: Meeting | null, cadence: string): boolean {
-  if (!lastMeeting) return true;
-  const today = new Date().toISOString().slice(0, 10);
-  if (lastMeeting.meetingDate === today) return false;
-  const cadenceDays = cadence === "biweekly" ? 14 : 7;
-  const daysSinceLast = (Date.now() - new Date(lastMeeting.meetingDate).getTime()) / (1000 * 60 * 60 * 24);
-  return daysSinceLast >= cadenceDays;
-}
 
 async function buildPageData(employee: Employee, meeting: Meeting) {
   const { resources: actionItems } = await actionItemsContainer.items
