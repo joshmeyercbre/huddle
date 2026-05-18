@@ -32,15 +32,17 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
 
   async function scheduleToday() {
     setScheduling(true);
-    const res = await fetch("/api/meetings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeId: employee.id, meetingDate: today }),
-    });
-    setScheduling(false);
-    // 201 = created, 409 = already exists — either way navigate to the huddle
-    if (res.ok || res.status === 409) {
-      router.push(`/huddle/${employee.token}`);
+    try {
+      const res = await fetch("/api/meetings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId: employee.id, meetingDate: today }),
+      });
+      if (res.ok || res.status === 409) {
+        router.push(`/huddle/${employee.token}`);
+      }
+    } finally {
+      setScheduling(false);
     }
   }
 
