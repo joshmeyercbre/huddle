@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Employee, Meeting } from "@/types";
 
@@ -9,10 +10,15 @@ interface Props {
 }
 
 export default function EmployeeCard({ employee, lastMeeting }: Props) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const employeeUrl = `${baseUrl}/huddle/${employee.token}`;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const hasMeetingToday = lastMeeting?.meetingDate === today;
 
   async function copyLink() {
     try {
@@ -21,6 +27,20 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard unavailable
+    }
+  }
+
+  async function scheduleToday() {
+    setScheduling(true);
+    const res = await fetch("/api/meetings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ employeeId: employee.id, meetingDate: today }),
+    });
+    setScheduling(false);
+    // 201 = created, 409 = already exists — either way navigate to the huddle
+    if (res.ok || res.status === 409) {
+      router.push(`/huddle/${employee.token}`);
     }
   }
 
@@ -61,12 +81,22 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
         )}
       </div>
 
-      <Link
-        href={`/huddle/${employee.token}`}
-        className="w-full text-center bg-cbre-green text-white text-sm font-medium rounded-lg py-2 hover:bg-cbre-mint hover:text-cbre-green transition-colors"
-      >
-        Open Huddle
-      </Link>
+      {hasMeetingToday ? (
+        <Link
+          href={`/huddle/${employee.token}`}
+          className="w-full text-center bg-cbre-green text-white text-sm font-medium rounded-lg py-2 hover:bg-cbre-mint hover:text-cbre-green transition-colors"
+        >
+          Open Huddle
+        </Link>
+      ) : (
+        <button
+          onClick={scheduleToday}
+          disabled={scheduling}
+          className="w-full text-center bg-cbre-green text-white text-sm font-medium rounded-lg py-2 hover:bg-cbre-mint hover:text-cbre-green transition-colors disabled:opacity-50"
+        >
+          {scheduling ? "Scheduling…" : "Schedule & Open"}
+        </button>
+      )}
     </div>
   );
 }
