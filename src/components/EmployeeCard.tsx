@@ -38,7 +38,6 @@ export default function EmployeeCard({ employee, lastMeeting }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: employee.id, meetingDate: today }),
       });
-      // 201 = created, 409 = already exists — either way navigate to the huddle
       if (res.ok || res.status === 409) {
         router.push(`/huddle/${employee.token}`);
       }
