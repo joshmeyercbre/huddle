@@ -28,7 +28,7 @@ async function getPageData(token: string) {
   const lastMeeting = meetings[0] ?? null;
 
   // Create a new meeting if none exists or if the last one is old enough
-  if (shouldCreateMeeting(lastMeeting, employee.cadence)) {
+  if (shouldCreateMeeting(lastMeeting)) {
     const today = new Date().toISOString().slice(0, 10);
 
     // Guard against duplicates: re-check if a meeting for today already exists
@@ -93,13 +93,10 @@ async function getPageData(token: string) {
   return buildPageData(employee, lastMeeting!);
 }
 
-function shouldCreateMeeting(lastMeeting: Meeting | null, cadence: string): boolean {
+function shouldCreateMeeting(lastMeeting: Meeting | null): boolean {
   if (!lastMeeting) return true;
   const today = new Date().toISOString().slice(0, 10);
-  if (lastMeeting.meetingDate === today) return false;
-  const cadenceDays = cadence === "biweekly" ? 14 : 7;
-  const daysSinceLast = (Date.now() - new Date(lastMeeting.meetingDate).getTime()) / (1000 * 60 * 60 * 24);
-  return daysSinceLast >= cadenceDays;
+  return lastMeeting.meetingDate !== today;
 }
 
 async function buildPageData(employee: Employee, meeting: Meeting) {
