@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { headers } from "next/headers";
 import { employeesContainer, meetingsContainer, actionItemsContainer } from "@/lib/cosmos";
 import { parsePrincipal } from "@/lib/auth";
-import { carryOverIncompleteItems } from "@/lib/carryover";
 import type { Employee, Meeting, ActionItem } from "@/types";
 import HuddleViewer from "@/components/HuddleViewer";
 
@@ -25,87 +24,16 @@ async function getPageData(token: string) {
     })
     .fetchAll();
 
-  const lastMeeting = meetings[0] ?? null;
+  const meeting = meetings[0] ?? null;
+  if (!meeting) return { employee, meeting: null, actionItems: [] as ActionItem[] };
 
-  // Create a new meeting if none exists or if the last one is old enough
-  if (shouldCreateMeeting(lastMeeting)) {
-    const today = new Date().toISOString().slice(0, 10);
-
-    // Guard against duplicates: re-check if a meeting for today already exists
-    const { resources: todayCheck } = await meetingsContainer.items
-      .query<Meeting>({
-        query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid AND c.meetingDate = @today",
-        parameters: [{ name: "@eid", value: employee.id }, { name: "@today", value: today }],
-      })
-      .fetchAll();
-
-    if (todayCheck.length > 0) {
-      return buildPageData(employee, todayCheck[0]);
-    }
-
-    // Count existing meetings to assign sequential number
-    const { resources: allMeetings } = await meetingsContainer.items
-      .query<Meeting>({
-        query: "SELECT VALUE COUNT(1) FROM c WHERE c.employeeId = @eid",
-        parameters: [{ name: "@eid", value: employee.id }],
-      })
-      .fetchAll();
-    const meetingNumber = ((allMeetings[0] as unknown as number) ?? 0) + 1;
-
-    const newMeeting: Meeting = {
-      id: crypto.randomUUID(),
-      employeeId: employee.id,
-      meetingDate: today,
-      createdAt: new Date().toISOString(),
-      number: meetingNumber,
-      sections: {
-        whatsOnYourMind: [],
-        workingOn: "",
-        blockers: "",
-        growthFocus: "",
-        supportNeeded: "",
-        feedbackForManager: "",
-        wantFeedbackOn: "",
-        goingWellManager: "",
-        areaToFocusManager: "",
-        feedbackForManagerResponse: "",
-        wantFeedbackOnResponse: "",
-      },
-    };
-
-    try {
-      await meetingsContainer.items.create(newMeeting);
-      if (lastMeeting) await carryOverIncompleteItems(lastMeeting.id, newMeeting.id, employee.id);
-    } catch {
-      // If create failed (e.g. duplicate from race condition), fall through to fetch existing
-      const { resources: fallback } = await meetingsContainer.items
-        .query<Meeting>({
-          query: "SELECT TOP 1 * FROM c WHERE c.employeeId = @eid ORDER BY c.meetingDate DESC",
-          parameters: [{ name: "@eid", value: employee.id }],
-        })
-        .fetchAll();
-      if (fallback[0]) return buildPageData(employee, fallback[0]);
-    }
-
-    return buildPageData(employee, newMeeting);
-  }
-
-  return buildPageData(employee, lastMeeting!);
-}
-
-function shouldCreateMeeting(lastMeeting: Meeting | null): boolean {
-  if (!lastMeeting) return true;
-  const today = new Date().toISOString().slice(0, 10);
-  return lastMeeting.meetingDate !== today;
-}
-
-async function buildPageData(employee: Employee, meeting: Meeting) {
   const { resources: actionItems } = await actionItemsContainer.items
     .query<ActionItem>({
       query: "SELECT * FROM c WHERE c.meetingId = @mid ORDER BY c.createdAt ASC",
       parameters: [{ name: "@mid", value: meeting.id }],
     })
     .fetchAll();
+
   return { employee, meeting, actionItems };
 }
 
@@ -147,7 +75,22 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
 
   const { employee, meeting, actionItems } = data;
 
-  // Only the employee's assigned manager gets manager privileges
+  if (!meeting) {
+    return (
+      <div className="h-screen flex flex-col overflow-hidden">
+        <header className="bg-cbre-green px-6 py-4 flex items-center gap-3">
+          <div className="w-2 h-8 bg-cbre-mint rounded-sm" />
+          <span className="text-xl font-bold text-white tracking-tight">Huddle</span>
+          <span className="text-white/40">|</span>
+          <span className="text-white font-medium">{employee.name}</span>
+        </header>
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400 text-sm">No meeting scheduled yet. Your manager will set one up soon.</p>
+        </main>
+      </div>
+    );
+  }
+
   const authenticatedUserId = parsePrincipal(principalHeader)?.userId ?? null;
   const isManager =
     process.env.NODE_ENV === "development" ||
