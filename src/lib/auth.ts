@@ -7,7 +7,7 @@ export interface ClientPrincipal {
   userRoles: string[];
 }
 
-const DEV_MANAGER_ID = "dev-manager";
+const DEV_MANAGER_ID = "209860716";
 
 export function parsePrincipal(header: string | null): ClientPrincipal | null {
   if (!header) return null;
