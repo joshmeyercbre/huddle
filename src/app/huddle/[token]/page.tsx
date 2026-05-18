@@ -75,28 +75,12 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
 
   const { employee, meeting, actionItems } = data;
 
-  if (!meeting) {
-    return (
-      <div className="h-screen flex flex-col overflow-hidden">
-        <header className="bg-cbre-green px-6 py-4 flex items-center gap-3">
-          <div className="w-2 h-8 bg-cbre-mint rounded-sm" />
-          <span className="text-xl font-bold text-white tracking-tight">Huddle</span>
-          <span className="text-white/40">|</span>
-          <span className="text-white font-medium">{employee.name}</span>
-        </header>
-        <main className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">No meeting scheduled yet. Your manager will set one up soon.</p>
-        </main>
-      </div>
-    );
-  }
-
-  const authenticatedUserId = parsePrincipal(principalHeader)?.userId ?? null;
   const isManager =
-    process.env.NODE_ENV === "development" ||
-    (authenticatedUserId !== null && authenticatedUserId === employee.managerId);
+    meeting !== null &&
+    (process.env.NODE_ENV === "development" ||
+      parsePrincipal(principalHeader)?.userId === employee.managerId);
 
-  const pastMeetings = await getPastMeetings(employee.id, meeting.id);
+  const pastMeetings = meeting ? await getPastMeetings(employee.id, meeting.id) : [];
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -107,25 +91,33 @@ export default async function EmployeeMeetingPage({ params }: { params: { token:
           <span className="text-white/40">|</span>
           <div>
             <span className="text-white font-medium">{employee.name}</span>
-            <span className="text-white/50 text-sm ml-3">
-              {new Date(meeting.meetingDate).toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
-            </span>
+            {meeting && (
+              <span className="text-white/50 text-sm ml-3">
+                {new Date(meeting.meetingDate).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
+            )}
           </div>
         </div>
       </header>
 
-      <HuddleViewer
-        currentMeeting={meeting}
-        currentActionItems={actionItems}
-        pastMeetings={pastMeetings}
-        employeeId={employee.id}
-        employeeName={employee.name}
-        isManager={isManager}
-      />
+      {meeting ? (
+        <HuddleViewer
+          currentMeeting={meeting}
+          currentActionItems={actionItems}
+          pastMeetings={pastMeetings}
+          employeeId={employee.id}
+          employeeName={employee.name}
+          isManager={isManager}
+        />
+      ) : (
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400 text-sm">No meeting scheduled yet. Your manager will set one up soon.</p>
+        </main>
+      )}
     </div>
   );
 }
